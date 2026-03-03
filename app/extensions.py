@@ -11,6 +11,7 @@ bcrypt = Bcrypt()
 migrate = Migrate()
 cors = CORS()
 
+
 def init_extensions(app):
     """Inicializa todas as extensões com a aplicação Flask"""
     db.init_app(app)
@@ -18,8 +19,16 @@ def init_extensions(app):
     bcrypt.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app)
-    
+
     # Configurações do LoginManager
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Recarrega usuário autenticado a partir do ID salvo na sessão."""
+    from app.models import User
+
+    return User.query.get(int(user_id))
