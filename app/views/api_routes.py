@@ -52,7 +52,14 @@ def playlists():
         return jsonify(resultado)
     
     elif request.method == 'POST':
-        dados = request.get_json()
+        dados = request.get_json(silent=True) or {}
+
+        if not dados.get('nome'):
+            return jsonify({
+                'success': False,
+                'message': 'Campo nome é obrigatório'
+            }), 400
+
         resultado = PlaylistController.criar_playlist(
             current_user.id,
             dados.get('nome'),

@@ -1,15 +1,19 @@
+import os
+
 from flask import Flask
 
-from app.extensions import db, init_extensions
+from app.config.settings import config
+from app.extensions import init_extensions
 
 
-def create_app():
+def create_app(config_name=None):
     app = Flask(__name__)
 
-    # Configurações
-    app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streaming_music.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    selected_config = config_name or os.getenv('FLASK_ENV', 'default')
+    app.config.from_object(config.get(selected_config, config['default']))
+
+    if app.config.get('SQLALCHEMY_DATABASE_URI') is None:
+        raise ValueError('SQLALCHEMY_DATABASE_URI não configurado para o ambiente atual.')
 
     # Inicializa extensões
     init_extensions(app)
@@ -24,9 +28,5 @@ def create_app():
     app.register_blueprint(music_bp)
     app.register_blueprint(playlist_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
-
-    # Cria tabelas se não existirem
-    with app.app_context():
-        db.create_all()
 
     return app
