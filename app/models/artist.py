@@ -1,4 +1,5 @@
 from app.extensions import db
+from app.models.album import Album
 
 class Artist(db.Model):
     """Model de Artista"""
@@ -28,6 +29,7 @@ class Artist(db.Model):
     def total_musicas(self):
         """Retorna total de músicas do artista"""
         from app.models.music import Music
+
         return Music.query.join(Album).filter(Album.artista_id == self.id).count()
     
     def to_dict(self):

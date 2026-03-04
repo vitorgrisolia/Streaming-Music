@@ -1,12 +1,13 @@
 import os
 from datetime import timedelta
+from secrets import token_hex
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class Config:
     """Configuração base da aplicação"""
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SECRET_KEY = os.getenv('SECRET_KEY') or token_hex(32)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     
