@@ -26,6 +26,12 @@ class AuthController:
             # Validações
             if not nome or len(nome.strip()) < 3:
                 return {'success': False, 'message': 'Nome deve ter no mínimo 3 caracteres'}
+
+            if not email:
+                return {'success': False, 'message': 'Email é obrigatório'}
+
+            if not senha:
+                return {'success': False, 'message': 'Senha é obrigatória'}
             
             if not AuthController.validar_email(email):
                 return {'success': False, 'message': 'Email inválido'}
@@ -62,6 +68,9 @@ class AuthController:
     def fazer_login(email, senha, lembrar=False):
         """Autentica usuário"""
         try:
+            if not email or not senha:
+                return {'success': False, 'message': 'Email e senha são obrigatórios'}
+
             usuario = User.query.filter_by(email=email.lower()).first()
             
             if not usuario:

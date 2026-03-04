@@ -12,8 +12,8 @@ api_bp = Blueprint('api', __name__)
 def listar_musicas():
     """API: Lista músicas"""
     termo = request.args.get('q')
-    limite = request.args.get('limite', 50, type=int)
-    offset = request.args.get('offset', 0, type=int)
+    limite = max(request.args.get('limite', 50, type=int) or 50, 1)
+    offset = max(request.args.get('offset', 0, type=int) or 0, 0)
     
     resultado = MusicController.buscar_musicas(termo, limite, offset)
     return jsonify(resultado)
@@ -27,7 +27,7 @@ def obter_musica(musica_id):
 @api_bp.route('/musicas/populares', methods=['GET'])
 def musicas_populares():
     """API: Músicas mais populares"""
-    limite = request.args.get('limite', 20, type=int)
+    limite = max(request.args.get('limite', 20, type=int) or 20, 1)
     resultado = MusicController.obter_musicas_populares(limite)
     return jsonify(resultado)
 
@@ -77,7 +77,7 @@ def playlist_detalhes(playlist_id):
         return jsonify(resultado)
     
     elif request.method == 'PUT':
-        dados = request.get_json()
+        dados = request.get_json(silent=True) or {}
         resultado = PlaylistController.atualizar_playlist(
             playlist_id, 
             current_user.id, 
@@ -131,7 +131,7 @@ def usuario_perfil():
         })
     
     elif request.method == 'PUT':
-        dados = request.get_json()
+        dados = request.get_json(silent=True) or {}
         resultado = AuthController.atualizar_perfil(current_user, dados)
         return jsonify(resultado)
 
