@@ -24,7 +24,16 @@ class User(UserMixin, db.Model):
     
     def set_password(self, senha):
         """Criptografa e define a senha do usuário"""
-        self.senha = bcrypt.generate_password_hash(senha).decode('utf-8')
+        senha_criptografada = bcrypt.generate_password_hash(senha)
+
+        if isinstance(senha_criptografada, bytes):
+            try:
+                self.senha = senha_criptografada.decode('utf-8')
+            except UnicodeDecodeError:
+                self.senha = senha_criptografada.decode('latin-1')
+            return
+
+        self.senha = senha_criptografada
     
     def check_password(self, senha):
         """Verifica se a senha está correta"""
