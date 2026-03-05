@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+DEFAULT_SQLITE_PATH = os.path.join(BASE_DIR, 'instance', 'streaming_music.db')
+
 class Config:
     """Configuração base da aplicação"""
     SECRET_KEY = os.getenv('SECRET_KEY') or token_hex(32)
@@ -29,10 +32,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Configuração de desenvolvimento"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        'postgresql://user:password@localhost:5432/music_platform_dev'
-    )
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or f'sqlite:///{DEFAULT_SQLITE_PATH}'
 
 
 class ProductionConfig(Config):

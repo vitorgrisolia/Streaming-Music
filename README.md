@@ -118,6 +118,8 @@ SECRET_KEY=sua-chave-secreta-super-segura-aqui
 DATABASE_URL=postgresql://seu_usuario:sua_senha@localhost:5432/music_platform_dev
 ```
 
+> Se `DATABASE_URL` não for definida, a aplicação usa por padrão `sqlite:///streaming_music.db`.
+
 ### 6. Inicialize o banco de dados
 
 ```bash
