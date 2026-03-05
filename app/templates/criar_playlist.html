@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Nova playlist</h1>
+<form method="post" class="form">
+  <label>Nome <input type="text" name="nome" required></label>
+  <label>Descrição <textarea name="descricao"></textarea></label>
+  <label><input type="checkbox" name="publica"> Playlist pública</label>
+  <button type="submit">Criar</button>
+</form>
+{% endblock %}

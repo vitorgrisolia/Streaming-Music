@@ -1,0 +1,17 @@
+:root { font-family: Arial, sans-serif; color-scheme: light; }
+body { margin: 0; background: #101522; color: #e8eef7; }
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:#18243d; }
+.topbar a { color:#d6e4ff; margin-right:1rem; text-decoration:none; }
+.brand { font-weight:700; }
+.container { max-width: 960px; margin: 1.5rem auto; padding: 0 1rem; }
+.grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap:1rem; }
+.card { background:#1f2e4d; padding:1rem; border-radius:8px; }
+.form, .form-inline { display:flex; flex-direction:column; gap:.8rem; max-width:460px; }
+.form-inline { flex-direction:row; max-width:100%; }
+input, textarea, button { border-radius:6px; border:1px solid #3d5179; padding:.55rem; }
+button { background:#4e7cff; color:#fff; cursor:pointer; }
+.messages { list-style:none; padding:0; }
+.msg { margin:.5rem 0; padding:.5rem .75rem; border-radius:6px; }
+.msg.success { background:#164c2f; }
+.msg.error { background:#692538; }
+.msg.info { background:#1e3b5e; }

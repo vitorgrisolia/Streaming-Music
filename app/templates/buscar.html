@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Buscar{% endblock %}
+{% block content %}
+<h1>Buscar músicas</h1>
+<form method="get" class="form-inline">
+  <input type="search" name="q" placeholder="Nome da música ou artista" value="{{ termo }}">
+  <button type="submit">Buscar</button>
+</form>
+<p>{{ total }} resultado(s)</p>
+<div class="grid">
+  {% for musica in musicas %}
+    <article class="card"><a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a></article>
+  {% else %}
+    <p>Nenhum resultado encontrado.</p>
+  {% endfor %}
+</div>
+{% endblock %}

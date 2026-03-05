@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Playlists públicas</h1>
+<ul>
+{% for playlist in playlists %}
+  <li><a href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">{{ playlist.nome }}</a></li>
+{% else %}
+  <li>Nenhuma playlist pública.</li>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Início{% endblock %}
+{% block content %}
+<h1>Músicas populares</h1>
+<div class="grid">
+  {% for musica in musicas_populares %}
+    <article class="card">
+      <h3><a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a></h3>
+      <p>{{ musica.artista.nome if musica.artista else 'Artista desconhecido' }}</p>
+    </article>
+  {% else %}
+    <p>Nenhuma música disponível.</p>
+  {% endfor %}
+</div>
+{% endblock %}

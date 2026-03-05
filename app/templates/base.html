@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Streaming Music{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a href="{{ url_for('music.index') }}" class="brand">🎵 Streaming Music</a>
+  <nav>
+    <a href="{{ url_for('music.buscar') }}">Buscar</a>
+    <a href="{{ url_for('playlist.publicas') }}">Playlists públicas</a>
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('playlist.minhas_playlists') }}">Minhas playlists</a>
+      <a href="{{ url_for('auth.perfil') }}">Perfil</a>
+      <a href="{{ url_for('auth.logout') }}">Sair</a>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}">Entrar</a>
+      <a href="{{ url_for('auth.register') }}">Cadastrar</a>
+    {% endif %}
+  </nav>
+</header>
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="messages">
+      {% for category, message in messages %}
+        <li class="msg {{ category }}">{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

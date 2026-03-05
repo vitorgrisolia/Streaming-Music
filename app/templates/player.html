@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Reproduzindo: {{ musica.titulo }}</h1>
+<audio controls {% if musica.arquivo_url %}src="{{ musica.arquivo_url }}"{% endif %}></audio>
+{% endblock %}

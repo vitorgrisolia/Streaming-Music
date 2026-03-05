@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}{{ musica.titulo }}{% endblock %}
+{% block content %}
+<h1>{{ musica.titulo }}</h1>
+<p>Artista: {{ musica.artista.nome if musica.artista else 'Desconhecido' }}</p>
+<p>Álbum: {{ musica.album.titulo if musica.album else '-' }}</p>
+<a href="{{ url_for('music.player', id=musica.id) }}">Ouvir agora</a>
+{% endblock %}
