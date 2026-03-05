@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-from config.settings import config
+from app.config.settings import config
 from app.extensions import init_extensions, login_manager
 from app.models import User
 
