@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Editar playlist</h1>
+<form method="post" class="form">
+  <label>Nome <input type="text" name="nome" value="{{ playlist.nome }}" required></label>
+  <label>Descrição <textarea name="descricao">{{ playlist.descricao }}</textarea></label>
+  <label><input type="checkbox" name="publica" {% if playlist.publica %}checked{% endif %}> Playlist pública</label>
+  <button type="submit">Salvar</button>
+</form>
+{% endblock %}

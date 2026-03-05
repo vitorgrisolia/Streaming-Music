@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ album.titulo }}</h1>
+<ol>
+{% for musica in musicas %}
+  <li><a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a></li>
+{% else %}
+  <li>Nenhuma faixa.</li>
+{% endfor %}
+</ol>
+{% endblock %}
