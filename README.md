@@ -210,6 +210,20 @@ flask seed-db
 flask shell
 ```
 
+## ✅ Testes Automatizados
+
+Foi adicionado o arquivo `tests/test_application.py` com testes de integração da API de músicas cobrindo os cenários:
+
+- Listagem de músicas (`GET /api/musicas`)
+- Busca por termo (`GET /api/musicas?q=...`)
+- Consulta de música inexistente (`GET /api/musicas/999`)
+
+Para executar os testes:
+
+```bash
+python -m unittest tests/test_application.py
+```
+
 ## 🏗️ Padrão MVC Implementado
 
 ### Model (Modelos)
