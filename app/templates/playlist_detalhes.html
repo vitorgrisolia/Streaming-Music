@@ -1,13 +1,58 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}{{ playlist.nome }} | Streaming Music{% endblock %}
 {% block content %}
-<h1>{{ playlist.nome }}</h1>
-<p>{{ playlist.descricao }}</p>
-{% if is_owner %}<a href="{{ url_for('playlist.editar', playlist_id=playlist.id) }}">Editar</a>{% endif %}
-<ul>
-{% for musica in playlist.musicas %}
-  <li>{{ musica.titulo }}</li>
-{% else %}
-  <li>Sem músicas nesta playlist.</li>
-{% endfor %}
-</ul>
+<section class="page-header" data-animate>
+  <p class="kicker">Playlist</p>
+  <h1 class="page-title">{{ playlist.nome }}</h1>
+  <p class="page-subtitle">{{ playlist.descricao or 'Playlist sem descricao.' }}</p>
+  <div class="meta-pills" style="margin-top: 0.9rem;">
+    <span class="chip">Musicas {{ playlist.total_musicas }}</span>
+    <span class="chip">Duracao total {{ playlist.duracao_total }}s</span>
+    <span class="chip">{{ 'Publica' if playlist.publica else 'Privada' }}</span>
+  </div>
+  <div class="inline-actions">
+    {% if is_owner %}
+      <a class="btn" href="{{ url_for('playlist.editar', playlist_id=playlist.id) }}">Editar playlist</a>
+    {% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('playlist.publicas') }}">Ver playlists publicas</a>
+  </div>
+</section>
+
+<section class="panel" data-animate style="--delay: 90ms;">
+  <div class="section-head">
+    <h2 class="section-title">Faixas da playlist</h2>
+    <span class="muted">{{ playlist.musicas|length }} item(ns)</span>
+  </div>
+
+  {% if playlist.musicas %}
+    <ol class="list-clean" style="margin-top: 0.9rem; list-style: none;">
+      {% for musica in playlist.musicas %}
+        {% set album = musica.album if musica.album else None %}
+        {% set artista = album.artista if album and album.artista else None %}
+        <li class="list-item" data-animate style="--delay: {{ 130 + (loop.index0 * 30) }}ms;">
+          <div class="list-item-main">
+            <strong>{{ '%02d' % (musica.posicao or loop.index) }} - {{ musica.titulo }}</strong>
+            <span>
+              {{ artista.nome if artista else 'Artista desconhecido' }}
+              {% if album %} | {{ album.titulo }}{% endif %}
+            </span>
+          </div>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">Detalhes</a>
+            {% if current_user.is_authenticated %}
+              <a class="btn btn-secondary" href="{{ url_for('music.player', id=musica.id) }}">Ouvir</a>
+            {% endif %}
+            {% if is_owner %}
+              <form method="post" action="{{ url_for('playlist.remover_musica', playlist_id=playlist.id, musica_id=musica.id) }}">
+                <button class="btn btn-danger" type="submit">Remover</button>
+              </form>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="empty-state" style="margin-top: 0.9rem;">Sem musicas nesta playlist.</div>
+  {% endif %}
+</section>
 {% endblock %}

@@ -1,17 +1,62 @@
-{% extends 'base.html' %}
-{% block title %}Buscar{% endblock %}
+﻿{% extends 'base.html' %}
+{% block title %}Buscar | Streaming Music{% endblock %}
 {% block content %}
-<h1>Buscar músicas</h1>
-<form method="get" class="form-inline">
-  <input type="search" name="q" placeholder="Nome da música ou artista" value="{{ termo }}">
-  <button type="submit">Buscar</button>
-</form>
-<p>{{ total }} resultado(s)</p>
-<div class="grid">
-  {% for musica in musicas %}
-    <article class="card"><a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a></article>
+<section class="page-header" data-animate>
+  <p class="kicker">Busca inteligente</p>
+  <h1 class="page-title">Encontre musicas, artistas e albuns</h1>
+  <p class="page-subtitle">Digite um termo para filtrar rapidamente no catalogo.</p>
+  <form method="get" class="search-shell" style="margin-top: 1rem;">
+    <input type="search" name="q" placeholder="Ex.: Aurora, Nights, Drive..." value="{{ termo }}">
+    <button type="submit">Buscar</button>
+  </form>
+</section>
+
+<section class="panel" data-animate style="--delay: 80ms;">
+  <div class="section-head">
+    <h2 class="section-title">Resultados</h2>
+    <span class="muted">{{ total }} resultado(s)</span>
+  </div>
+
+  {% if musicas %}
+    <div class="card-grid" style="margin-top: 0.9rem;">
+      {% for musica in musicas %}
+        {% set album = musica.album if musica.album else None %}
+        {% set artista = album.artista if album and album.artista else None %}
+        <article class="music-card" data-animate style="--delay: {{ 130 + (loop.index0 * 35) }}ms;">
+          <span class="card-index">Resultado #{{ '%02d' % (((pagina - 1) * 20) + loop.index) }}</span>
+          <h3 class="music-title">
+            <a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a>
+          </h3>
+          <p class="meta-line">{{ artista.nome if artista else 'Artista desconhecido' }}</p>
+          <div class="meta-pills">
+            {% if album %}<span class="chip">{{ album.titulo }}</span>{% endif %}
+            {% if musica.duracao_formatada %}<span class="chip">{{ musica.duracao_formatada }}</span>{% endif %}
+          </div>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">Detalhes</a>
+            {% if current_user.is_authenticated %}
+              <a class="btn btn-secondary" href="{{ url_for('music.player', id=musica.id) }}">Ouvir</a>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
   {% else %}
-    <p>Nenhum resultado encontrado.</p>
-  {% endfor %}
-</div>
+    <div class="empty-state" style="margin-top: 0.9rem;">
+      Nenhum resultado encontrado para "{{ termo }}".
+    </div>
+  {% endif %}
+
+  {% if total_paginas > 1 %}
+    <nav class="pagination-panel" data-animate style="--delay: 180ms; margin-top: 1rem;">
+      {% if pagina > 1 %}
+        <a class="btn btn-ghost" href="{{ url_for('music.buscar', q=termo, pagina=pagina - 1) }}">Pagina anterior</a>
+      {% endif %}
+      <span class="chip">Pagina {{ pagina }} de {{ total_paginas }}</span>
+      {% if pagina < total_paginas %}
+        <a class="btn btn-ghost" href="{{ url_for('music.buscar', q=termo, pagina=pagina + 1) }}">Proxima pagina</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+</section>
 {% endblock %}

@@ -1,10 +1,31 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}Editar Playlist | Streaming Music{% endblock %}
 {% block content %}
-<h1>Editar playlist</h1>
-<form method="post" class="form">
-  <label>Nome <input type="text" name="nome" value="{{ playlist.nome }}" required></label>
-  <label>Descrição <textarea name="descricao">{{ playlist.descricao }}</textarea></label>
-  <label><input type="checkbox" name="publica" {% if playlist.publica %}checked{% endif %}> Playlist pública</label>
-  <button type="submit">Salvar</button>
-</form>
+<section class="page-header" data-animate>
+  <p class="kicker">Edicao</p>
+  <h1 class="page-title">Editar playlist</h1>
+  <p class="page-subtitle">Atualize os dados da playlist e ajuste a visibilidade.</p>
+</section>
+
+<section class="form-card" data-animate style="--delay: 80ms; max-width: 720px;">
+  <form method="post" class="form form-stack">
+    <label class="field">Nome da playlist
+      <input type="text" name="nome" value="{{ playlist.nome }}" required>
+    </label>
+
+    <label class="field">Descricao
+      <textarea name="descricao">{{ playlist.descricao }}</textarea>
+    </label>
+
+    <label class="checkbox-field">
+      <input type="checkbox" name="publica" {% if playlist.publica %}checked{% endif %}>
+      Playlist publica
+    </label>
+
+    <div class="actions">
+      <button type="submit">Salvar alteracoes</button>
+      <a class="btn btn-ghost" href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">Cancelar</a>
+    </div>
+  </form>
+</section>
 {% endblock %}

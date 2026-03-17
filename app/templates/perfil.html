@@ -1,9 +1,46 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}Perfil | Streaming Music{% endblock %}
 {% block content %}
-<h1>Meu perfil</h1>
-<form method="post" class="form">
-  <label>Nome <input type="text" name="nome" value="{{ usuario.nome }}" required></label>
-  <label>Email <input type="email" name="email" value="{{ usuario.email }}" required></label>
-  <button type="submit">Salvar</button>
-</form>
+<section class="page-header" data-animate>
+  <p class="kicker">Conta</p>
+  <h1 class="page-title">Meu perfil</h1>
+  <p class="page-subtitle">Atualize seus dados e mantenha sua conta protegida.</p>
+</section>
+
+<section class="detail-grid">
+  <article class="form-card" data-animate style="--delay: 80ms;">
+    <h2 class="section-title">Dados pessoais</h2>
+    <form method="post" class="form form-stack" style="margin-top: 0.9rem;">
+      <label class="field">Nome
+        <input type="text" name="nome" value="{{ usuario.nome }}" required>
+      </label>
+      <label class="field">Email
+        <input type="email" name="email" value="{{ usuario.email }}" required>
+      </label>
+      <button type="submit">Salvar alteracoes</button>
+    </form>
+  </article>
+
+  <aside class="panel" data-animate style="--delay: 130ms;">
+    <h2 class="section-title">Seguranca e resumo</h2>
+    <div class="meta-pills" style="margin-top: 0.9rem;">
+      <span class="chip">Playlists {{ usuario.playlists.count() }}</span>
+      <span class="chip">Favoritos {{ usuario.favoritos.count() }}</span>
+      <span class="chip">Membro desde {{ usuario.data_criacao.strftime('%d/%m/%Y') if usuario.data_criacao else '-' }}</span>
+    </div>
+
+    <form method="post" action="{{ url_for('auth.alterar_senha') }}" class="form form-stack" style="margin-top: 1rem;">
+      <label class="field">Senha atual
+        <input type="password" name="senha_atual" required>
+      </label>
+      <label class="field">Nova senha
+        <input type="password" name="senha_nova" required>
+      </label>
+      <label class="field">Confirmar nova senha
+        <input type="password" name="confirmar_senha" required>
+      </label>
+      <button type="submit">Atualizar senha</button>
+    </form>
+  </aside>
+</section>
 {% endblock %}

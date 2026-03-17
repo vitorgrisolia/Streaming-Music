@@ -1,11 +1,41 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}{{ artista.nome }} | Streaming Music{% endblock %}
 {% block content %}
-<h1>{{ artista.nome }}</h1>
-<ul>
-{% for album in albuns %}
-  <li><a href="{{ url_for('music.album_detalhes', album_id=album.id) }}">{{ album.titulo }}</a></li>
-{% else %}
-  <li>Nenhum álbum cadastrado.</li>
-{% endfor %}
-</ul>
+<section class="page-header" data-animate>
+  <p class="kicker">Artista</p>
+  <h1 class="page-title">{{ artista.nome }}</h1>
+  <p class="page-subtitle">{{ artista.bio or 'Biografia nao disponivel.' }}</p>
+  <div class="meta-pills" style="margin-top: 0.9rem;">
+    {% if artista.genero %}<span class="chip">{{ artista.genero }}</span>{% endif %}
+    <span class="chip">Albuns {{ artista.total_albuns }}</span>
+    <span class="chip">Musicas {{ artista.total_musicas }}</span>
+  </div>
+</section>
+
+<section class="panel" data-animate style="--delay: 80ms;">
+  <div class="section-head">
+    <h2 class="section-title">Albuns do artista</h2>
+    <span class="muted">{{ albuns|length }} item(ns)</span>
+  </div>
+
+  {% if albuns %}
+    <div class="card-grid" style="margin-top: 0.9rem;">
+      {% for album in albuns %}
+        <article class="music-card" data-animate style="--delay: {{ 120 + (loop.index0 * 45) }}ms;">
+          <span class="card-index">Album #{{ '%02d' % loop.index }}</span>
+          <h3 class="music-title"><a href="{{ url_for('music.album_detalhes', album_id=album.id) }}">{{ album.titulo }}</a></h3>
+          <p class="meta-line">Ano {{ album.ano_lancamento or '-' }}</p>
+          <div class="meta-pills">
+            <span class="chip">Faixas {{ album.total_musicas }}</span>
+          </div>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{{ url_for('music.album_detalhes', album_id=album.id) }}">Abrir album</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="margin-top: 0.9rem;">Nenhum album cadastrado para este artista.</div>
+  {% endif %}
+</section>
 {% endblock %}

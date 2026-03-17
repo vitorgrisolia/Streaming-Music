@@ -1,5 +1,30 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}Player | Streaming Music{% endblock %}
 {% block content %}
-<h1>Reproduzindo: {{ musica.titulo }}</h1>
-<audio controls {% if musica.arquivo_url %}src="{{ musica.arquivo_url }}"{% endif %}></audio>
+{% set album = musica.album if musica.album else None %}
+{% set artista = album.artista if album and album.artista else None %}
+
+<section class="page-header" data-animate>
+  <p class="kicker">Player</p>
+  <h1 class="page-title">Reproduzindo: {{ musica.titulo }}</h1>
+  <p class="page-subtitle">
+    {{ artista.nome if artista else 'Artista desconhecido' }}
+    {% if album %} | {{ album.titulo }}{% endif %}
+  </p>
+</section>
+
+<section class="panel player-shell" data-animate style="--delay: 80ms;">
+  <div class="meta-pills">
+    {% if musica.duracao_formatada %}<span class="chip">Duracao {{ musica.duracao_formatada }}</span>{% endif %}
+    <span class="chip">Faixa {{ musica.numero_faixa or '-' }}</span>
+  </div>
+
+  <audio controls preload="metadata" {% if musica.arquivo_url %}src="{{ musica.arquivo_url }}"{% endif %}></audio>
+  <div class="wave-strip" aria-hidden="true"></div>
+
+  <div class="actions" style="margin-top: 1rem;">
+    <a class="btn btn-ghost" href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">Voltar para detalhes</a>
+    <a class="btn" href="{{ url_for('music.buscar') }}">Descobrir mais musicas</a>
+  </div>
+</section>
 {% endblock %}

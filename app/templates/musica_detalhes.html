@@ -1,8 +1,59 @@
-{% extends 'base.html' %}
-{% block title %}{{ musica.titulo }}{% endblock %}
+﻿{% extends 'base.html' %}
+{% block title %}{{ musica.titulo }} | Streaming Music{% endblock %}
 {% block content %}
-<h1>{{ musica.titulo }}</h1>
-<p>Artista: {{ musica.artista.nome if musica.artista else 'Desconhecido' }}</p>
-<p>Álbum: {{ musica.album.titulo if musica.album else '-' }}</p>
-<a href="{{ url_for('music.player', id=musica.id) }}">Ouvir agora</a>
+{% set album = musica.album if musica.album else None %}
+{% set artista = album.artista if album and album.artista else None %}
+
+<section class="page-header" data-animate>
+  <p class="kicker">Detalhe da faixa</p>
+  <h1 class="page-title">{{ musica.titulo }}</h1>
+  <p class="page-subtitle">Visualize as informacoes principais e escolha como deseja ouvir.</p>
+  <div class="meta-pills" style="margin-top: 0.9rem;">
+    {% if musica.duracao_formatada %}<span class="chip">Duracao {{ musica.duracao_formatada }}</span>{% endif %}
+    <span class="chip">Reproducoes {{ musica.visualizacoes }}</span>
+  </div>
+</section>
+
+<section class="detail-grid">
+  <article class="panel detail-panel" data-animate style="--delay: 70ms;">
+    <h2 class="section-title">Sobre esta musica</h2>
+    <dl class="detail-meta" style="margin-top: 0.85rem;">
+      <dt>Artista</dt>
+      <dd>
+        {% if artista %}
+          <a class="text-link" href="{{ url_for('music.artista_detalhes', artista_id=artista.id) }}">{{ artista.nome }}</a>
+        {% else %}
+          Artista desconhecido
+        {% endif %}
+      </dd>
+
+      <dt>Album</dt>
+      <dd>
+        {% if album %}
+          <a class="text-link" href="{{ url_for('music.album_detalhes', album_id=album.id) }}">{{ album.titulo }}</a>
+        {% else %}
+          Nao informado
+        {% endif %}
+      </dd>
+
+      <dt>Faixa</dt>
+      <dd>{{ musica.numero_faixa or '-' }}</dd>
+
+      <dt>URL de audio</dt>
+      <dd>{{ musica.arquivo_url }}</dd>
+    </dl>
+  </article>
+
+  <aside class="panel detail-panel" data-animate style="--delay: 120ms;">
+    <h2 class="section-title">Acoes rapidas</h2>
+    <div class="actions" style="margin-top: 0.8rem;">
+      {% if current_user.is_authenticated %}
+        <a class="btn btn-secondary" href="{{ url_for('music.player', id=musica.id) }}">Ouvir agora</a>
+      {% else %}
+        <a class="btn btn-secondary" href="{{ url_for('auth.login', next=url_for('music.player', id=musica.id)) }}">Entrar para ouvir</a>
+      {% endif %}
+      <a class="btn btn-ghost" href="{{ url_for('music.buscar') }}">Voltar para busca</a>
+    </div>
+  </aside>
+</section>
 {% endblock %}

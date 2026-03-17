@@ -1,12 +1,44 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}Minhas Playlists | Streaming Music{% endblock %}
 {% block content %}
-<h1>Minhas playlists</h1>
-<a href="{{ url_for('playlist.criar') }}">Criar nova</a>
-<ul>
-{% for playlist in playlists %}
-  <li><a href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">{{ playlist.nome }}</a></li>
-{% else %}
-  <li>Você ainda não possui playlists.</li>
-{% endfor %}
-</ul>
+<section class="page-header" data-animate>
+  <p class="kicker">Minha biblioteca</p>
+  <h1 class="page-title">Minhas playlists</h1>
+  <p class="page-subtitle">Gerencie suas colecoes, edite descricoes e mantenha tudo organizado.</p>
+  <div class="inline-actions">
+    <a class="btn" href="{{ url_for('playlist.criar') }}">Criar nova playlist</a>
+    <a class="btn btn-ghost" href="{{ url_for('playlist.publicas') }}">Explorar publicas</a>
+  </div>
+</section>
+
+<section class="panel" data-animate style="--delay: 80ms;">
+  <div class="section-head">
+    <h2 class="section-title">Suas playlists</h2>
+    <span class="muted">{{ playlists|length }} item(ns)</span>
+  </div>
+
+  {% if playlists %}
+    <div class="card-grid" style="margin-top: 0.9rem;">
+      {% for playlist in playlists %}
+        <article class="music-card" data-animate style="--delay: {{ 120 + (loop.index0 * 35) }}ms;">
+          <span class="card-index">Playlist #{{ '%02d' % loop.index }}</span>
+          <h3 class="music-title"><a href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">{{ playlist.nome }}</a></h3>
+          <p class="meta-line">{{ playlist.descricao or 'Sem descricao.' }}</p>
+          <div class="meta-pills">
+            <span class="chip">Musicas {{ playlist.total_musicas }}</span>
+            <span class="chip">{{ 'Publica' if playlist.publica else 'Privada' }}</span>
+          </div>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">Detalhes</a>
+            <a class="btn" href="{{ url_for('playlist.editar', playlist_id=playlist.id) }}">Editar</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="margin-top: 0.9rem;">
+      Voce ainda nao possui playlists. Crie a primeira para comecar.
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

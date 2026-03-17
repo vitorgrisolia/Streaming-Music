@@ -1,15 +1,69 @@
-{% extends 'base.html' %}
-{% block title %}Início{% endblock %}
+﻿{% extends 'base.html' %}
+{% block title %}Inicio | Streaming Music{% endblock %}
 {% block content %}
-<h1>Músicas populares</h1>
-<div class="grid">
-  {% for musica in musicas_populares %}
-    <article class="card">
-      <h3><a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a></h3>
-      <p>{{ musica.artista.nome if musica.artista else 'Artista desconhecido' }}</p>
-    </article>
+<section class="page-header" data-animate>
+  <p class="kicker">Destaques</p>
+  <h1 class="page-title">Catalogo vivo para ouvir agora</h1>
+  <p class="page-subtitle">Explore o ranking de faixas populares, abra os detalhes e acione o player com um clique.</p>
+  <div class="inline-actions">
+    <a class="btn" href="{{ url_for('music.buscar') }}">Buscar no catalogo</a>
+    {% if current_user.is_authenticated %}
+      <a class="btn btn-secondary" href="{{ url_for('playlist.minhas_playlists') }}">Abrir minhas playlists</a>
+    {% else %}
+      <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Entrar para ouvir</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="stats-row">
+  <article class="stat-card" data-animate style="--delay: 30ms;">
+    <span class="label">Faixas em destaque</span>
+    <strong>{{ musicas_populares|length }}</strong>
+  </article>
+  <article class="stat-card" data-animate style="--delay: 90ms;">
+    <span class="label">Experiencia</span>
+    <strong>Player integrado</strong>
+  </article>
+  <article class="stat-card" data-animate style="--delay: 150ms;">
+    <span class="label">Navegacao</span>
+    <strong>Por musica, album e artista</strong>
+  </article>
+</section>
+
+<section class="panel" data-animate style="--delay: 180ms;">
+  <div class="section-head">
+    <h2 class="section-title">Top musicas</h2>
+    <a class="text-link" href="{{ url_for('music.buscar') }}">Ver todas</a>
+  </div>
+
+  {% if musicas_populares %}
+    <div class="card-grid" style="margin-top: 0.9rem;">
+      {% for musica in musicas_populares %}
+        {% set album = musica.album if musica.album else None %}
+        {% set artista = album.artista if album and album.artista else None %}
+        <article class="music-card" data-animate style="--delay: {{ 220 + (loop.index0 * 40) }}ms;">
+          <span class="card-index">Rank #{{ '%02d' % loop.index }}</span>
+          <h3 class="music-title">
+            <a href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">{{ musica.titulo }}</a>
+          </h3>
+          <p class="meta-line">{{ artista.nome if artista else 'Artista desconhecido' }}</p>
+          <div class="meta-pills">
+            {% if album %}<span class="chip">{{ album.titulo }}</span>{% endif %}
+            {% if musica.duracao_formatada %}<span class="chip">{{ musica.duracao_formatada }}</span>{% endif %}
+          </div>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{{ url_for('music.musica_detalhes', musica_id=musica.id) }}">Detalhes</a>
+            {% if current_user.is_authenticated %}
+              <a class="btn btn-secondary" href="{{ url_for('music.player', id=musica.id) }}">Ouvir</a>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
   {% else %}
-    <p>Nenhuma música disponível.</p>
-  {% endfor %}
-</div>
+    <div class="empty-state" style="margin-top: 0.9rem;">
+      Nenhuma musica disponivel no momento.
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

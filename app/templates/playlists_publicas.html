@@ -1,11 +1,39 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
+{% block title %}Playlists Publicas | Streaming Music{% endblock %}
 {% block content %}
-<h1>Playlists públicas</h1>
-<ul>
-{% for playlist in playlists %}
-  <li><a href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">{{ playlist.nome }}</a></li>
-{% else %}
-  <li>Nenhuma playlist pública.</li>
-{% endfor %}
-</ul>
+<section class="page-header" data-animate>
+  <p class="kicker">Comunidade</p>
+  <h1 class="page-title">Playlists publicas</h1>
+  <p class="page-subtitle">Descubra selecoes criadas por outros usuarios e navegue por novas faixas.</p>
+</section>
+
+<section class="panel" data-animate style="--delay: 70ms;">
+  <div class="section-head">
+    <h2 class="section-title">Colecoes abertas</h2>
+    <span class="muted">{{ playlists|length }} item(ns)</span>
+  </div>
+
+  {% if playlists %}
+    <div class="card-grid" style="margin-top: 0.9rem;">
+      {% for playlist in playlists %}
+        <article class="music-card" data-animate style="--delay: {{ 110 + (loop.index0 * 35) }}ms;">
+          <span class="card-index">Publica #{{ '%02d' % loop.index }}</span>
+          <h3 class="music-title"><a href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">{{ playlist.nome }}</a></h3>
+          <p class="meta-line">{{ playlist.descricao or 'Sem descricao.' }}</p>
+          <div class="meta-pills">
+            <span class="chip">Musicas {{ playlist.total_musicas }}</span>
+            <span class="chip">Duracao {{ playlist.duracao_total }}s</span>
+          </div>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{{ url_for('playlist.detalhes', playlist_id=playlist.id) }}">Abrir playlist</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="margin-top: 0.9rem;">
+      Nenhuma playlist publica disponivel agora.
+    </div>
+  {% endif %}
+</section>
 {% endblock %}
