@@ -1,288 +1,212 @@
-# 🎵 Plataforma de Streaming de Música
+﻿# Streaming Music Platform
 
-Sistema completo de streaming de música desenvolvido com Flask seguindo o padrão MVC (Model-View-Controller).
+Aplicacao web de streaming de musica com Flask (padrao MVC), com interface web, API REST e seed completo para ambiente de demo.
 
-## 📋 Características
+## Visao Geral
 
-- ✅ Autenticação e gerenciamento de usuários
-- ✅ Busca e reprodução de músicas
-- ✅ Criação e gerenciamento de playlists
-- ✅ Sistema de favoritos
-- ✅ Visualização de artistas e álbuns
-- ✅ API RESTful completa
-- ✅ Arquitetura MVC bem definida
-- ✅ Banco de dados PostgreSQL
-- ✅ Relacionamentos complexos entre entidades
+O projeto inclui:
 
-## 🛠️ Tecnologias Utilizadas
+- autenticacao e sessao de usuarios
+- catalogo de artistas, albuns e musicas
+- player HTML5 para reproducao de audio
+- criacao e gerenciamento de playlists
+- favoritos por usuario
+- API REST para musicas, playlists e perfil
+- seed completo com 20 musicas tocaveis
 
-### Backend
-- **Python 3.8+**
-- **Flask** - Framework web
-- **Flask-SQLAlchemy** - ORM para banco de dados
-- **Flask-Login** - Gerenciamento de sessões
-- **Flask-Bcrypt** - Criptografia de senhas
-- **PostgreSQL** - Banco de dados relacional
+## Stack
 
-### Frontend
-- **HTML5**
-- **CSS3**
-- **JavaScript**
+- Python 3.8+
+- Flask
+- Flask-SQLAlchemy
+- Flask-Login
+- Flask-Bcrypt
+- python-dotenv
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
-```
-music-platform/
-├── app/
-│   ├── __init__.py              # Factory da aplicação
-│   ├── extensions.py            # Extensões do Flask
-│   ├── models/                  # Camada de Dados (Model)
-│   │   ├── user.py             # Model de Usuário
-│   │   ├── artist.py           # Model de Artista
-│   │   ├── album.py            # Model de Álbum
-│   │   ├── music.py            # Model de Música
-│   │   └── playlist.py         # Model de Playlist
-│   ├── controllers/             # Lógica de Negócio (Controller)
-│   │   ├── auth_controller.py
-│   │   ├── music_controller.py
-│   │   └── playlist_controller.py
-│   ├── views/                   # Rotas e Apresentação (View)
-│   │   ├── auth_routes.py
-│   │   ├── music_routes.py
-│   │   ├── playlist_routes.py
-│   │   └── api_routes.py
-│   ├── static/                  # Arquivos estáticos
-│   │   ├── css/
-│   │   └── js/
-│   └── templates/               # Templates HTML
-├── config/
-│   └── settings.py             # Configurações da aplicação
-├── requirements.txt
-├── run.py                      # Arquivo principal
-└── .env.example               # Exemplo de variáveis de ambiente
+```text
+Streaming Music/
+|-- app/
+|   |-- __init__.py
+|   |-- extensions.py
+|   |-- config/
+|   |   `-- settings.py
+|   |-- controllers/
+|   |-- models/
+|   |-- views/
+|   |-- templates/
+|   `-- static/
+|       |-- css/
+|       |-- js/
+|       `-- music/            # arquivos .wav gerados pelo seed
+|-- instance/
+|-- tests/
+|-- run.py
+|-- requirements.txt
+|-- .env
+`-- README.md
 ```
 
-## 🚀 Instalação e Configuração
+## Instalacao
 
-### 1. Clone o repositório
+### 1. Clonar repositorio
 
 ```bash
 git clone <seu-repositorio>
-cd music-platform
+cd "Streaming Music"
 ```
 
-### 2. Crie e ative um ambiente virtual
+### 2. Criar e ativar ambiente virtual
 
 ```bash
 python -m venv venv
 
+# Windows (PowerShell)
+venv\Scripts\Activate.ps1
+
 # Linux/Mac
 source venv/bin/activate
-
-# Windows
-venv\Scripts\activate
 ```
 
-### 3. Instale as dependências
+### 3. Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure o banco de dados PostgreSQL
+### 4. Configurar variaveis de ambiente
 
-```bash
-# Entre no PostgreSQL
-psql -U postgres
-
-# Crie o banco de dados
-CREATE DATABASE music_platform_dev;
-CREATE USER seu_usuario WITH PASSWORD '123';
-GRANT ALL PRIVILEGES ON DATABASE music_platform_dev TO seu_usuario;
-```
-
-### 5. Configure as variáveis de ambiente
-
-Copie o arquivo `.env.example` para `.env` e edite com suas configurações:
-
-```bash
-cp .env.example .env
-```
-
-Edite o arquivo `.env`:
+Crie um arquivo `.env` na raiz do projeto:
 
 ```env
 FLASK_APP=run.py
 FLASK_ENV=development
-SECRET_KEY=sua-chave-secreta-super-segura-aqui
-DATABASE_URL=postgresql://seu_usuario:sua_senha@localhost:5432/music_platform_dev
+SECRET_KEY=sua-chave-secreta
+DATABASE_URL=sqlite:///streaming_music.db
 ```
 
-> Se `DATABASE_URL` não for definida, a aplicação usa por padrão `sqlite:///streaming_music.db`.
+Observacoes:
 
-### 6. Inicialize o banco de dados
+- Se `DATABASE_URL` nao for informada, o projeto usa SQLite local em `instance/streaming_music.db`.
+- Para PostgreSQL, use uma URL no formato `postgresql://usuario:senha@host:5432/banco`.
 
-```bash
-# Criar as tabelas
-flask init-db
+## Executando a Aplicacao
 
-# Popular com dados de exemplo (opcional)
-flask seed-db
-```
-
-### 7. Execute a aplicação
+### Opcao 1: executar diretamente
 
 ```bash
 python run.py
 ```
 
-A aplicação estará disponível em: `http://localhost:5000`
-
-## 👤 Credenciais de Teste
-
-Se você executou o comando `flask seed-db`, use estas credenciais:
-
-- **Email:** teste@email.com
-- **Senha:** senha123
-
-## 📊 Modelo de Dados
-
-### Entidades Principais
-
-1. **Usuários** - Gerenciamento de contas
-2. **Artistas** - Informações sobre artistas
-3. **Álbuns** - Coleções de músicas
-4. **Músicas** - Faixas individuais
-5. **Playlists** - Coleções personalizadas de músicas
-
-### Relacionamentos
-
-- Um **Artista** possui vários **Álbuns**
-- Um **Álbum** pertence a um **Artista** e possui várias **Músicas**
-- Uma **Música** pertence a um **Álbum**
-- Um **Usuário** pode criar várias **Playlists**
-- Uma **Playlist** pode conter várias **Músicas** (relacionamento N:N)
-- Um **Usuário** pode favoritar várias **Músicas** (relacionamento N:N)
-
-## 🔌 API REST
-
-### Endpoints de Músicas
-
-```
-GET    /api/musicas                    # Lista todas as músicas
-GET    /api/musicas/<id>               # Detalhes de uma música
-GET    /api/musicas/populares          # Músicas mais populares
-POST   /api/musicas/<id>/reproduzir    # Registra reprodução
-```
-
-### Endpoints de Playlists
-
-```
-GET    /api/playlists                        # Lista playlists do usuário
-POST   /api/playlists                        # Cria nova playlist
-GET    /api/playlists/<id>                   # Detalhes da playlist
-PUT    /api/playlists/<id>                   # Atualiza playlist
-DELETE /api/playlists/<id>                   # Deleta playlist
-POST   /api/playlists/<id>/musicas/<mid>     # Adiciona música
-DELETE /api/playlists/<id>/musicas/<mid>     # Remove música
-GET    /api/playlists/publicas               # Lista playlists públicas
-```
-
-### Endpoints de Usuário
-
-```
-GET    /api/usuario/perfil                   # Perfil do usuário
-PUT    /api/usuario/perfil                   # Atualiza perfil
-POST   /api/usuario/favoritos/<id>           # Adiciona favorito
-DELETE /api/usuario/favoritos/<id>           # Remove favorito
-```
-
-## 🧪 Comandos Flask CLI
+### Opcao 2: via Flask CLI
 
 ```bash
-# Inicializar banco de dados
-flask init-db
-
-# Popular com dados de exemplo
-flask seed-db
-
-# Abrir shell interativo com contexto da aplicação
-flask shell
+flask --app run.py run --debug
 ```
 
-## ✅ Testes Automatizados
+Aplicacao disponivel em: [http://localhost:5000](http://localhost:5000)
 
-Foi adicionado o arquivo `tests/test_application.py` com testes de integração da API de músicas cobrindo os cenários:
+## Comandos Flask
 
-- Listagem de músicas (`GET /api/musicas`)
-- Busca por termo (`GET /api/musicas?q=...`)
-- Consulta de música inexistente (`GET /api/musicas/999`)
+```bash
+# criar tabelas
+flask --app run.py init-db
 
-Para executar os testes:
+# resetar e popular banco com seed completo
+flask --app run.py seed-db
+
+# shell com contexto da aplicacao
+flask --app run.py shell
+```
+
+## Seed Completo (20 musicas tocaveis)
+
+O comando `seed-db`:
+
+- remove e recria as tabelas (`drop_all` + `create_all`)
+- cria 2 usuarios de demo
+- cria 5 artistas e 5 albuns
+- cria 20 musicas
+- cria 3 playlists
+- gera 20 arquivos de audio `.wav` em `app/static/music`
+
+Credenciais geradas pelo seed:
+
+- `demo@streamingmusic.local` / `123456`
+- `curador@streamingmusic.local` / `123456`
+
+Playlists de exemplo:
+
+- `Top 20 do Streaming Music` (publica)
+- `Favoritas da Semana` (privada do usuario demo)
+- `Foco no Trabalho` (publica)
+
+## Testes
 
 ```bash
 python -m unittest tests/test_application.py
 ```
 
-## 🏗️ Padrão MVC Implementado
+## Endpoints da API (resumo)
 
-### Model (Modelos)
-- Define a estrutura de dados
-- Gerencia interações com o banco de dados
-- Implementa lógica de negócio específica de entidades
-- Localização: `app/models/`
+### Musicas
 
-### View (Visões)
-- Define rotas da aplicação
-- Processa requisições HTTP
-- Renderiza templates
-- Retorna respostas JSON (API)
-- Localização: `app/views/`
+- `GET /api/musicas`
+- `GET /api/musicas/<id>`
+- `GET /api/musicas/populares`
+- `POST /api/musicas/<id>/reproduzir`
 
-### Controller (Controladores)
-- Contém a lógica de negócio
-- Processa dados entre Model e View
-- Valida entradas
-- Gerencia transações
-- Localização: `app/controllers/`
+### Playlists
 
-## 🔒 Segurança
+- `GET /api/playlists`
+- `POST /api/playlists`
+- `GET /api/playlists/<id>`
+- `PUT /api/playlists/<id>`
+- `DELETE /api/playlists/<id>`
+- `POST /api/playlists/<id>/musicas/<mid>`
+- `DELETE /api/playlists/<id>/musicas/<mid>`
+- `GET /api/playlists/publicas`
 
-- ✅ Senhas criptografadas com Bcrypt
-- ✅ Proteção contra CSRF
-- ✅ Sessões seguras com cookies HTTP-only
-- ✅ Validação de dados de entrada
-- ✅ Autenticação obrigatória para operações sensíveis
+### Usuario
 
-## 🚀 Deploy em Produção
+- `GET /api/usuario/perfil`
+- `PUT /api/usuario/perfil`
+- `POST /api/usuario/favoritos/<id>`
+- `DELETE /api/usuario/favoritos/<id>`
 
-### Configurações recomendadas:
+## Troubleshooting
 
-1. Use um servidor WSGI como **Gunicorn**
-2. Configure um proxy reverso com **Nginx**
-3. Use **PostgreSQL** em produção
-4. Configure variáveis de ambiente adequadas
-5. Ative HTTPS
-6. Configure backups regulares do banco de dados
+### `ModuleNotFoundError: No module named 'app'`
 
-### Exemplo com Gunicorn:
+Use uma destas abordagens:
+
+1. Execute comandos a partir da pasta raiz do projeto (`Streaming Music`).
+2. Prefira `flask --app run.py ...` em vez de imports de modulo ambiguos.
+3. Se rodar Flask a partir da pasta pai, use aspas no app path por causa do espaco no nome da pasta:
+
+```bash
+flask --app "Streaming Music.run" routes
+```
+
+### Audio nao toca no player
+
+1. Rode novamente `flask --app run.py seed-db` para garantir os arquivos em `app/static/music`.
+2. Verifique se o arquivo da musica existe no caminho retornado por `arquivo_url`.
+3. Abra diretamente uma URL de audio no navegador, por exemplo:
+
+```text
+http://localhost:5000/static/music/aurora-pulse-neon-nights-01-city-lights.wav
+```
+
+## Deploy (referencia rapida)
+
+Exemplo com Gunicorn:
 
 ```bash
 gunicorn -w 4 -b 0.0.0.0:8000 run:app
 ```
 
-## 📝 Licença
+## Licenca
 
-Este projeto é de código aberto e está disponível para fins educacionais.
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull requests.
-
-## 📧 Contato
-
-Para dúvidas ou sugestões, entre em contato através do repositório.
-
----
-
-**Desenvolvido Vitor Grisolia usando Flask e Python**
+Uso educacional.
