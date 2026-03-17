@@ -180,7 +180,11 @@ Playlists de exemplo:
 ## Testes
 
 ```bash
+# executa via unittest
 python -m unittest tests/test_application.py
+
+# executa com mensagens detalhadas por cenario + resumo final APROVADO/REPROVADO
+python tests/test_application.py
 ```
 
 ## Endpoints da API (resumo)
