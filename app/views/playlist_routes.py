@@ -56,8 +56,8 @@ def detalhes(playlist_id):
     is_owner = current_user.is_authenticated and playlist['usuario_id'] == current_user.id
     
     return render_template('playlist_detalhes.html', 
-                         playlist=playlist, 
-                         is_owner=is_owner)
+                        playlist=playlist, 
+                        is_owner=is_owner)
 
 @playlist_bp.route('/<int:playlist_id>/editar', methods=['GET', 'POST'])
 @login_required

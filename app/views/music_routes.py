@@ -34,11 +34,11 @@ def buscar():
         flash(resultado.get('message', 'Erro ao buscar músicas'), 'error')
     
     return render_template('buscar.html', 
-                         musicas=musicas,
-                         termo=termo,
-                         pagina=pagina,
-                         total_paginas=total_paginas,
-                         total=total)
+                        musicas=musicas,
+                        termo=termo,
+                        pagina=pagina,
+                        total_paginas=total_paginas,
+                        total=total)
 
 @music_bp.route('/musica/<int:musica_id>')
 def musica_detalhes(musica_id):
