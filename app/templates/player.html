@@ -1,5 +1,5 @@
 ﻿{% extends 'base.html' %}
-{% block title %}Player | Streaming Music{% endblock %}
+{% block title %}Player | {{ APP_NAME }}{% endblock %}
 {% block content %}
 {% set album = musica.album if musica.album else None %}
 {% set artista = album.artista if album and album.artista else None %}
@@ -28,3 +28,4 @@
   </div>
 </section>
 {% endblock %}
+

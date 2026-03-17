@@ -1,6 +1,7 @@
-import os
+﻿import os
 from datetime import timedelta
 from secrets import token_hex
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,42 +9,48 @@ load_dotenv()
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEFAULT_SQLITE_PATH = os.path.join(BASE_DIR, 'instance', 'streaming_music.db')
 
+
 class Config:
-    """Configuração base da aplicação"""
+    """Configuracao base da aplicacao"""
+
+    APP_NAME = os.getenv('APP_NAME') or 'Vitorando Music'
     SECRET_KEY = os.getenv('SECRET_KEY') or token_hex(32)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
-    
-    # Configurações de sessão
+
+    # Configuracoes de sessao
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    
+
     # Upload de arquivos
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
     ALLOWED_EXTENSIONS = {'mp3', 'wav', 'flac', 'ogg'}
-    
-    # Configurações de paginação
+
+    # Configuracoes de paginacao
     ITEMS_PER_PAGE = 20
 
 
 class DevelopmentConfig(Config):
-    """Configuração de desenvolvimento"""
+    """Configuracao de desenvolvimento"""
+
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or f'sqlite:///{DEFAULT_SQLITE_PATH}'
 
 
 class ProductionConfig(Config):
-    """Configuração de produção"""
+    """Configuracao de producao"""
+
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SESSION_COOKIE_SECURE = True
 
 
 class TestingConfig(Config):
-    """Configuração de testes"""
+    """Configuracao de testes"""
+
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
@@ -53,5 +60,6 @@ config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
     'testing': TestingConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
 }
+

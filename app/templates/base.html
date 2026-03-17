@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Streaming Music{% endblock %}</title>
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -13,9 +13,9 @@
 <header class="topbar">
   <div class="topbar-inner" data-animate>
     <a href="{{ url_for('music.index') }}" class="brand">
-      <span class="brand-badge">SM</span>
+      <span class="brand-badge">{{ APP_INITIALS }}</span>
       <span class="brand-text">
-        <strong>Streaming Music</strong>
+        <strong>{{ APP_NAME }}</strong>
         <small>Ouca, descubra e crie playlists</small>
       </span>
     </a>

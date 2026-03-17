@@ -242,7 +242,7 @@ def seed_db():
 
     playlist_publica = Playlist(
         usuario_id=usuarios[0].id,
-        nome='Top 20 do Streaming Music',
+        nome=f"Top 20 do {app.config.get('APP_NAME', 'Vitorando Music')}",
         descricao='Playlist completa com as 20 faixas de demonstracao.',
         publica=True
     )

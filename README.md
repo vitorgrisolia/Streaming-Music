@@ -82,6 +82,7 @@ Crie um arquivo `.env` na raiz do projeto:
 ```env
 FLASK_APP=run.py
 FLASK_ENV=development
+APP_NAME=Vitorando Music
 SECRET_KEY=sua-chave-secreta
 DATABASE_URL=sqlite:///streaming_music.db
 ```
@@ -90,6 +91,31 @@ Observacoes:
 
 - Se `DATABASE_URL` nao for informada, o projeto usa SQLite local em `instance/streaming_music.db`.
 - Para PostgreSQL, use uma URL no formato `postgresql://usuario:senha@host:5432/banco`.
+- Para mudar o nome exibido no sistema, altere apenas `APP_NAME`.
+
+### Personalizacao do nome do sistema
+
+O nome da aplicacao foi centralizado em uma variavel unica:
+
+- Variavel: `APP_NAME`
+- Onde definir: arquivo `.env`
+- Efeito no front-end:
+  - titulo da aba do navegador
+  - nome no topo (navbar)
+  - iniciais no badge (geradas automaticamente, ex.: `Vitorando Music` -> `VM`)
+- Efeito no seed:
+  - a playlist publica principal passa a usar o nome configurado
+
+Exemplo rapido:
+
+```env
+APP_NAME=Meu Streaming
+```
+
+Depois de alterar:
+
+1. Reinicie a aplicacao.
+2. Se quiser refletir o novo nome tambem nos dados de exemplo, rode `flask --app run.py seed-db`.
 
 ## Executando a Aplicacao
 
@@ -138,7 +164,7 @@ Credenciais geradas pelo seed:
 
 Playlists de exemplo:
 
-- `Top 20 do Streaming Music` (publica)
+- `Top 20 do <APP_NAME>` (publica, nome dinamico conforme configuracao)
 - `Favoritas da Semana` (privada do usuario demo)
 - `Foco no Trabalho` (publica)
 

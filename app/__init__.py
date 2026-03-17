@@ -1,9 +1,14 @@
-import os
+﻿import os
 
 from flask import Flask
 
 from app.config.settings import config
 from app.extensions import init_extensions
+
+
+def _build_app_initials(app_name):
+    parts = [part[0].upper() for part in app_name.split() if part and part[0].isalnum()]
+    return ''.join(parts[:2]) or 'SM'
 
 
 def create_app(config_name=None):
@@ -13,10 +18,18 @@ def create_app(config_name=None):
     app.config.from_object(config.get(selected_config, config['default']))
 
     if app.config.get('SQLALCHEMY_DATABASE_URI') is None:
-        raise ValueError('SQLALCHEMY_DATABASE_URI não configurado para o ambiente atual.')
+        raise ValueError('SQLALCHEMY_DATABASE_URI nao configurado para o ambiente atual.')
 
-    # Inicializa extensões
+    # Inicializa extensoes
     init_extensions(app)
+
+    @app.context_processor
+    def inject_app_identity():
+        app_name = app.config.get('APP_NAME', 'Vitorando Music')
+        return {
+            'APP_NAME': app_name,
+            'APP_INITIALS': _build_app_initials(app_name),
+        }
 
     # Registra blueprints
     from app.views.auth_routes import auth_bp
