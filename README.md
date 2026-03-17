@@ -11,6 +11,7 @@ O projeto inclui:
 - player HTML5 para reproducao de audio
 - criacao e gerenciamento de playlists
 - favoritos por usuario
+- nome do usuario logado exibido no topo apos login
 - API REST para musicas, playlists e perfil
 - seed completo com 20 musicas tocaveis
 
@@ -116,6 +117,14 @@ Depois de alterar:
 
 1. Reinicie a aplicacao.
 2. Se quiser refletir o novo nome tambem nos dados de exemplo, rode `flask --app run.py seed-db`.
+
+### Exibicao do usuario logado
+
+Quando o usuario esta autenticado, o sistema mostra automaticamente no topo:
+
+- `Ola, <nome do usuario>`
+
+Essa informacao vem de `current_user.nome` (Flask-Login) e aparece na navbar em todas as telas protegidas/publicas enquanto houver sessao ativa.
 
 ## Executando a Aplicacao
 
