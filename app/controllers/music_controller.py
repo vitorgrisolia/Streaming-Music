@@ -39,7 +39,7 @@ class MusicController:
     def obter_musica(musica_id):
         """Obtém detalhes de uma música"""
         try:
-            musica = Music.query.get(musica_id)
+            musica = db.session.get(Music, musica_id)
             
             if not musica:
                 return {'success': False, 'message': 'Música não encontrada'}
@@ -63,7 +63,7 @@ class MusicController:
                     return {'success': False, 'message': f'Campo {campo} é obrigatório'}
             
             # Verifica se álbum existe
-            album = Album.query.get(dados['album_id'])
+            album = db.session.get(Album, dados['album_id'])
             if not album:
                 return {'success': False, 'message': 'Álbum não encontrado'}
             
@@ -92,7 +92,7 @@ class MusicController:
     def atualizar_musica(musica_id, dados):
         """Atualiza música existente"""
         try:
-            musica = Music.query.get(musica_id)
+            musica = db.session.get(Music, musica_id)
             
             if not musica:
                 return {'success': False, 'message': 'Música não encontrada'}
@@ -120,7 +120,7 @@ class MusicController:
     def deletar_musica(musica_id):
         """Deleta música"""
         try:
-            musica = Music.query.get(musica_id)
+            musica = db.session.get(Music, musica_id)
             
             if not musica:
                 return {'success': False, 'message': 'Música não encontrada'}
@@ -154,7 +154,7 @@ class MusicController:
     def registrar_reproducao(musica_id):
         """Registra reprodução de música"""
         try:
-            musica = Music.query.get(musica_id)
+            musica = db.session.get(Music, musica_id)
             
             if not musica:
                 return {'success': False, 'message': 'Música não encontrada'}

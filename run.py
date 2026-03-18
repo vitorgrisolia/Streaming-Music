@@ -3,11 +3,25 @@ import re
 import struct
 import unicodedata
 import wave
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app import create_app
 from app.extensions import db
-from app.models import User, Artist, Album, Music, Playlist
+from app.models import (
+    Album,
+    ApiKey,
+    Artist,
+    AuditLog,
+    Membership,
+    Music,
+    Plan,
+    Playlist,
+    Subscription,
+    Tenant,
+    UsageEvent,
+    User,
+)
 
 app = create_app()
 SEED_AUDIO_DURATION_SECONDS = 12
@@ -155,6 +169,13 @@ def make_shell_context():
     return {
         'db': db,
         'User': User,
+        'Tenant': Tenant,
+        'Membership': Membership,
+        'Plan': Plan,
+        'Subscription': Subscription,
+        'UsageEvent': UsageEvent,
+        'AuditLog': AuditLog,
+        'ApiKey': ApiKey,
         'Artist': Artist,
         'Album': Album,
         'Music': Music,
@@ -166,6 +187,14 @@ def make_shell_context():
 def init_db():
     """Inicializa o banco de dados"""
     db.create_all()
+    if not Tenant.query.filter_by(slug=Tenant.default_slug()).first():
+        db.session.add(
+            Tenant(
+                nome=app.config.get('DEFAULT_TENANT_NAME', 'Workspace Padrao'),
+                slug=Tenant.default_slug(),
+            )
+        )
+        db.session.commit()
     print('Banco de dados inicializado!')
 
 
@@ -182,11 +211,80 @@ def seed_db():
     db.drop_all()
     db.create_all()
 
+    tenant_default = Tenant(
+        nome=app.config.get('DEFAULT_TENANT_NAME', 'Workspace Padrao'),
+        slug=app.config.get('DEFAULT_TENANT_SLUG', 'default'),
+    )
+    db.session.add(tenant_default)
+    db.session.flush()
+
+    planos = [
+        Plan(
+            codigo='free',
+            nome='Free',
+            descricao='Plano inicial para testes',
+            preco_mensal_centavos=0,
+            moeda='brl',
+            limite_playlists_privadas=1,
+            limite_usuarios=1,
+            ativo=True,
+        ),
+        Plan(
+            codigo='pro',
+            nome='Pro',
+            descricao='Plano para projetos em crescimento',
+            preco_mensal_centavos=4900,
+            moeda='brl',
+            limite_playlists_privadas=25,
+            limite_usuarios=5,
+            ativo=True,
+        ),
+        Plan(
+            codigo='business',
+            nome='Business',
+            descricao='Plano para equipes com maior volume',
+            preco_mensal_centavos=14900,
+            moeda='brl',
+            limite_playlists_privadas=200,
+            limite_usuarios=25,
+            ativo=True,
+        ),
+    ]
+    db.session.add_all(planos)
+    db.session.flush()
+
     usuarios = [
-        User(nome='Usuario Demo', email='demo@streamingmusic.local', senha='123456'),
-        User(nome='Curador Publico', email='curador@streamingmusic.local', senha='123456'),
+        User(
+            nome='Usuario Demo',
+            email='demo@streamingmusic.local',
+            senha='123456',
+            tenant_id=tenant_default.id,
+            email_verificado_em=datetime.now(UTC).replace(tzinfo=None),
+        ),
+        User(
+            nome='Curador Publico',
+            email='curador@streamingmusic.local',
+            senha='123456',
+            tenant_id=tenant_default.id,
+            email_verificado_em=datetime.now(UTC).replace(tzinfo=None),
+        ),
     ]
     db.session.add_all(usuarios)
+    db.session.flush()
+
+    memberships = [
+        Membership(tenant_id=tenant_default.id, user_id=usuarios[0].id, role='owner', ativo=True),
+        Membership(tenant_id=tenant_default.id, user_id=usuarios[1].id, role='member', ativo=True),
+    ]
+    db.session.add_all(memberships)
+    db.session.add(
+        Subscription(
+            tenant_id=tenant_default.id,
+            plan_id=planos[0].id,
+            status='active',
+            periodo_inicio=datetime.now(UTC).replace(tzinfo=None),
+        )
+    )
     db.session.commit()
 
     musicas = []
@@ -241,18 +339,21 @@ def seed_db():
         usuarios[0].add_favorito(musica)
 
     playlist_publica = Playlist(
+        tenant_id=tenant_default.id,
         usuario_id=usuarios[0].id,
         nome=f"Top 20 do {app.config.get('APP_NAME', 'Vitorando Music')}",
         descricao='Playlist completa com as 20 faixas de demonstracao.',
         publica=True
     )
     playlist_privada = Playlist(
+        tenant_id=tenant_default.id,
         usuario_id=usuarios[0].id,
         nome='Favoritas da Semana',
         descricao='Selecao pessoal para ouvir durante a semana.',
         publica=False
     )
     playlist_curador = Playlist(
+        tenant_id=tenant_default.id,
         usuario_id=usuarios[1].id,
         nome='Foco no Trabalho',
         descricao='Faixas instrumentais para concentracao.',
@@ -275,6 +376,10 @@ def seed_db():
 
     print('Seed concluido com sucesso!')
     print(f'Usuarios criados: {User.query.count()}')
+    print(f'Tenants criados: {Tenant.query.count()}')
+    print(f'Memberships criadas: {Membership.query.count()}')
+    print(f'Planos criados: {Plan.query.count()}')
+    print(f'Assinaturas criadas: {Subscription.query.count()}')
     print(f'Artistas criados: {Artist.query.count()}')
     print(f'Albuns criados: {Album.query.count()}')
     print(f'Musicas criadas: {Music.query.count()}')

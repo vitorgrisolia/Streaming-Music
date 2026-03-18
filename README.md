@@ -22,7 +22,10 @@ O projeto inclui:
 - Flask-SQLAlchemy
 - Flask-Login
 - Flask-Bcrypt
+- Flask-Migrate
 - python-dotenv
+- Stripe API
+- Sentry (opcional)
 
 ## Estrutura do Projeto
 
@@ -86,6 +89,11 @@ FLASK_ENV=development
 APP_NAME=Vitorando Music
 SECRET_KEY=sua-chave-secreta
 DATABASE_URL=sqlite:///streaming_music.db
+DEFAULT_TENANT_SLUG=default
+DEFAULT_TENANT_NAME=Workspace Padrao
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+SENTRY_DSN=
 ```
 
 Observacoes:
@@ -145,6 +153,9 @@ Aplicacao disponivel em: [http://localhost:5000](http://localhost:5000)
 ## Comandos Flask
 
 ```bash
+# aplicar todas as migrations
+flask --app run.py db upgrade
+
 # criar tabelas
 flask --app run.py init-db
 
@@ -213,6 +224,43 @@ python tests/test_application.py
 - `PUT /api/usuario/perfil`
 - `POST /api/usuario/favoritos/<id>`
 - `DELETE /api/usuario/favoritos/<id>`
+
+### Billing
+
+- `GET /api/billing/plans`
+- `GET /api/billing/subscription`
+- `POST /api/billing/checkout`
+- `POST /api/billing/portal`
+- `POST /api/billing/webhook`
+
+### Auth e Seguranca
+
+- `POST /api/auth/verificar-email`
+- `POST /api/auth/solicitar-reset`
+- `POST /api/auth/redefinir-senha`
+
+## SaaS: Planos e Cobranca
+
+- O sistema possui modelos de `Plan`, `Subscription` e `UsageEvent`.
+- O tenant de cada usuario pode ter uma assinatura ativa vinculada a um plano.
+- O limite de playlists privadas e controlado pelo plano atual do tenant.
+- O endpoint de webhook Stripe (`/api/billing/webhook`) atualiza a assinatura automaticamente.
+
+Fluxo recomendado:
+
+1. Configure `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET`.
+2. Cadastre `stripe_price_id` nos planos.
+3. Inicie checkout via `POST /api/billing/checkout`.
+4. Deixe o webhook sincronizar status e periodo da assinatura.
+
+## Seguranca e Producao
+
+- Login pode exigir e-mail verificado (`REQUIRE_EMAIL_VERIFICATION=true`).
+- Reset de senha por token com expiracao configuravel (`PASSWORD_RESET_TOKEN_EXP_HOURS`).
+- Auditoria de eventos sensiveis em `audit_logs`.
+- Rate limit para rotas `/api/*` configuravel por `RATE_LIMIT_REQUESTS_PER_MINUTE`.
+- Observabilidade com logs de duracao por request e Sentry opcional (`SENTRY_DSN`).
+- Producao deve usar `DATABASE_URL` com PostgreSQL e cookies seguras.
 
 ## Troubleshooting
 
