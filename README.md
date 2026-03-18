@@ -56,9 +56,15 @@ Streaming Music/
 |   |   |-- audit_log.py
 |   |   `-- api_key.py
 |   |-- services/
-|   |   `-- stripe_service.py
+|   |   |-- stripe_service.py
+|   |   `-- email_service.py
 |   |-- views/
+|   |   |-- api_routes.py
+|   |   |-- billing_routes.py
+|   |   `-- ...
 |   |-- templates/
+|   |   |-- billing_planos.html
+|   |   `-- ...
 |   `-- static/
 |-- migrations/
 |   `-- versions/
@@ -95,6 +101,12 @@ source venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
+```
+
+Recomendado no Windows (garante instalacao no ambiente correto):
+
+```bash
+venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
 ### 4. Configurar variaveis de ambiente
@@ -229,6 +241,17 @@ Aplicacao: [http://localhost:5000](http://localhost:5000)
 - `POST /api/billing/portal`
 - `POST /api/billing/webhook`
 
+## Tela de Planos (Web)
+
+- `GET /billing/planos` (login obrigatorio)
+- `POST /billing/planos/trocar` (troca de plano pela interface)
+
+Comportamento de troca:
+
+- `free`: troca imediata
+- `pro` e `business`: usa checkout Stripe quando configurado
+- em ambiente de desenvolvimento/teste sem Stripe, permite troca local para facilitar validacao
+
 ### Auth e Seguranca
 
 - `POST /api/auth/verificar-email`
@@ -309,6 +332,17 @@ flask --app "Streaming Music.run" routes
 
 ```text
 http://localhost:5000/static/music/aurora-pulse-neon-nights-01-city-lights.wav
+```
+
+### `Biblioteca stripe nao instalada no ambiente`
+
+Esse erro normalmente indica instalacao fora do `venv` ativo.
+
+```bash
+# Windows (PowerShell)
+venv\Scripts\Activate.ps1
+venv\Scripts\python.exe -m pip install -r requirements.txt
+venv\Scripts\python.exe -c "import stripe; print(stripe._version.VERSION)"
 ```
 
 ## Licenca
