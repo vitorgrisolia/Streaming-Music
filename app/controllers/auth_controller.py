@@ -8,6 +8,7 @@ from flask_login import login_user, logout_user
 
 from app.extensions import db
 from app.models import AuditLog, Membership, Tenant, User
+from app.services.email_service import EmailService, EmailServiceError
 
 
 class AuthController:
@@ -116,6 +117,20 @@ class AuthController:
                 'user': usuario.to_dict(),
                 'verification_required': not usuario.email_verificado,
             }
+            if not usuario.email_verificado and usuario.email_verificacao_token:
+                try:
+                    EmailService.send_email_verification(
+                        to_email=usuario.email,
+                        token=usuario.email_verificacao_token,
+                    )
+                    response['verification_email_sent'] = True
+                except EmailServiceError as mail_error:
+                    response['verification_email_sent'] = False
+                    response['message'] = (
+                        'Usuario cadastrado, mas houve falha ao enviar email de verificacao'
+                    )
+                    response['email_error'] = str(mail_error)
+
             if current_app.config.get('TESTING') or current_app.config.get('DEBUG'):
                 response['email_verification_token'] = usuario.email_verificacao_token
             return response
@@ -220,6 +235,14 @@ class AuthController:
                 usuario.email_verificacao_token = secrets.token_urlsafe(32)
 
             db.session.commit()
+            if usuario.email_verificacao_token:
+                try:
+                    EmailService.send_email_verification(
+                        to_email=usuario.email,
+                        token=usuario.email_verificacao_token,
+                    )
+                except EmailServiceError:
+                    pass
             AuthController._registrar_evento_auditoria(
                 evento='auth.profile.updated',
                 tenant_id=usuario.tenant_id,
@@ -307,6 +330,16 @@ class AuthController:
                     'success': True,
                     'message': 'Se o email existir, voce recebera instrucoes para redefinir a senha',
                 }
+                try:
+                    EmailService.send_password_reset(
+                        to_email=usuario.email,
+                        token=usuario.reset_senha_token,
+                    )
+                    response['reset_email_sent'] = True
+                except EmailServiceError as mail_error:
+                    response['reset_email_sent'] = False
+                    response['email_error'] = str(mail_error)
+
                 if current_app.config.get('TESTING') or current_app.config.get('DEBUG'):
                     response['reset_token'] = usuario.reset_senha_token
                 return response

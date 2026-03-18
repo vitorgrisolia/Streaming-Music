@@ -1,31 +1,37 @@
-﻿# Streaming Music Platform
+# Streaming Music Platform
 
-Aplicacao web de streaming de musica com Flask (padrao MVC), com interface web, API REST e seed completo para ambiente de demo.
+Aplicacao web de streaming de musica com Flask (MVC), interface web, API REST e suporte SaaS com multi-tenant, planos, cobranca e seguranca reforcada.
 
 ## Visao Geral
 
 O projeto inclui:
 
 - autenticacao e sessao de usuarios
+- verificacao de e-mail e reset de senha por token
 - catalogo de artistas, albuns e musicas
 - player HTML5 para reproducao de audio
 - criacao e gerenciamento de playlists
 - favoritos por usuario
-- nome do usuario logado exibido no topo apos login
-- API REST para musicas, playlists e perfil
-- seed completo com 20 musicas tocaveis
+- isolamento por tenant (multi-tenant)
+- planos (`Plan`) e assinatura por tenant (`Subscription`)
+- eventos de uso para controle de limite (`UsageEvent`)
+- webhook Stripe para sincronizar cobranca
+- auditoria de eventos sensiveis (`AuditLog`)
+- suporte a API keys (`ApiKey`)
+- rate limit para API e observabilidade por request
 
 ## Stack
 
 - Python 3.8+
 - Flask
 - Flask-SQLAlchemy
+- Flask-Migrate (Alembic)
 - Flask-Login
 - Flask-Bcrypt
-- Flask-Migrate
-- python-dotenv
+- Flask-CORS
 - Stripe API
-- Sentry (opcional)
+- sentry-sdk (opcional)
+- python-dotenv
 
 ## Estrutura do Projeto
 
@@ -37,13 +43,25 @@ Streaming Music/
 |   |-- config/
 |   |   `-- settings.py
 |   |-- controllers/
+|   |   |-- auth_controller.py
+|   |   |-- billing_controller.py
+|   |   |-- music_controller.py
+|   |   `-- playlist_controller.py
 |   |-- models/
+|   |   |-- tenant.py
+|   |   |-- membership.py
+|   |   |-- plan.py
+|   |   |-- subscription.py
+|   |   |-- usage_event.py
+|   |   |-- audit_log.py
+|   |   `-- api_key.py
+|   |-- services/
+|   |   `-- stripe_service.py
 |   |-- views/
 |   |-- templates/
 |   `-- static/
-|       |-- css/
-|       |-- js/
-|       `-- music/            # arquivos .wav gerados pelo seed
+|-- migrations/
+|   `-- versions/
 |-- instance/
 |-- tests/
 |-- run.py
@@ -86,117 +104,102 @@ Crie um arquivo `.env` na raiz do projeto:
 ```env
 FLASK_APP=run.py
 FLASK_ENV=development
+
 APP_NAME=Vitorando Music
 SECRET_KEY=sua-chave-secreta
+APP_BASE_URL=http://localhost:5000
+
 DATABASE_URL=sqlite:///streaming_music.db
 DEFAULT_TENANT_SLUG=default
 DEFAULT_TENANT_NAME=Workspace Padrao
+
+REQUIRE_EMAIL_VERIFICATION=false
+AUTO_VERIFY_EMAIL=true
+PASSWORD_RESET_TOKEN_EXP_HOURS=1
+
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=120
+
 STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_PRICE_ID_FREE=price_xxx_free
+STRIPE_PRICE_ID_PRO=price_xxx_pro
+STRIPE_PRICE_ID_BUSINESS=price_xxx_business
+
+EMAIL_DELIVERY_ENABLED=false
+SMTP_HOST=smtp.seuprovedor.com
+SMTP_PORT=587
+SMTP_USERNAME=usuario
+SMTP_PASSWORD=senha
+SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+MAIL_FROM=no-reply@streamingmusic.local
+
 SENTRY_DSN=
 ```
 
 Observacoes:
 
 - Se `DATABASE_URL` nao for informada, o projeto usa SQLite local em `instance/streaming_music.db`.
-- Para PostgreSQL, use uma URL no formato `postgresql://usuario:senha@host:5432/banco`.
-- Para mudar o nome exibido no sistema, altere apenas `APP_NAME`.
+- Para producao, use PostgreSQL em `DATABASE_URL`.
+- Em producao, recomenda-se `REQUIRE_EMAIL_VERIFICATION=true`.
 
-### Personalizacao do nome do sistema
-
-O nome da aplicacao foi centralizado em uma variavel unica:
-
-- Variavel: `APP_NAME`
-- Onde definir: arquivo `.env`
-- Efeito no front-end:
-  - titulo da aba do navegador
-  - nome no topo (navbar)
-  - iniciais no badge (geradas automaticamente, ex.: `Vitorando Music` -> `VM`)
-- Efeito no seed:
-  - a playlist publica principal passa a usar o nome configurado
-
-Exemplo rapido:
-
-```env
-APP_NAME=Meu Streaming
-```
-
-Depois de alterar:
-
-1. Reinicie a aplicacao.
-2. Se quiser refletir o novo nome tambem nos dados de exemplo, rode `flask --app run.py seed-db`.
-
-### Exibicao do usuario logado
-
-Quando o usuario esta autenticado, o sistema mostra automaticamente no topo:
-
-- `Ola, <nome do usuario>`
-
-Essa informacao vem de `current_user.nome` (Flask-Login) e aparece na navbar em todas as telas protegidas/publicas enquanto houver sessao ativa.
-
-## Executando a Aplicacao
-
-### Opcao 1: executar diretamente
-
-```bash
-python run.py
-```
-
-### Opcao 2: via Flask CLI
-
-```bash
-flask --app run.py run --debug
-```
-
-Aplicacao disponivel em: [http://localhost:5000](http://localhost:5000)
-
-## Comandos Flask
+## Banco de Dados e Migrations
 
 ```bash
 # aplicar todas as migrations
 flask --app run.py db upgrade
 
-# criar tabelas
+# inicializar tabelas (modo rapido local)
 flask --app run.py init-db
 
-# resetar e popular banco com seed completo
+# resetar e popular banco com seed de demo
 flask --app run.py seed-db
 
-# shell com contexto da aplicacao
-flask --app run.py shell
+# sincronizar stripe_price_id dos planos via .env
+flask --app run.py sync-stripe-prices
 ```
 
-## Seed Completo (20 musicas tocaveis)
+Migrations SaaS adicionadas:
+
+- `004_create_plans`
+- `005_create_subscriptions`
+- `006_create_usage_events_and_limits`
+- `007_add_email_verification_fields`
+- `008_create_audit_logs`
+- `009_add_api_keys_or_access_tokens`
+
+## Seed de Demo
 
 O comando `seed-db`:
 
-- remove e recria as tabelas (`drop_all` + `create_all`)
+- remove e recria tabelas (`drop_all` + `create_all`)
+- cria tenant default
 - cria 2 usuarios de demo
-- cria 5 artistas e 5 albuns
-- cria 20 musicas
+- cria memberships
+- cria 3 planos (`free`, `pro`, `business`)
+- cria assinatura ativa para o tenant default
+- cria 5 artistas, 5 albuns e 20 musicas
 - cria 3 playlists
 - gera 20 arquivos de audio `.wav` em `app/static/music`
 
-Credenciais geradas pelo seed:
+Credenciais de demo:
 
 - `demo@streamingmusic.local` / `123456`
 - `curador@streamingmusic.local` / `123456`
 
-Playlists de exemplo:
-
-- `Top 20 do <APP_NAME>` (publica, nome dinamico conforme configuracao)
-- `Favoritas da Semana` (privada do usuario demo)
-- `Foco no Trabalho` (publica)
-
-## Testes
+## Executando a Aplicacao
 
 ```bash
-# executa via unittest
-python -m unittest tests/test_application.py
+# opcao direta
+python run.py
 
-# executa com mensagens detalhadas por cenario + resumo final APROVADO/REPROVADO
-python tests/test_application.py
+# opcao Flask CLI
+flask --app run.py run --debug
 ```
+
+Aplicacao: [http://localhost:5000](http://localhost:5000)
 
 ## Endpoints da API (resumo)
 
@@ -218,13 +221,6 @@ python tests/test_application.py
 - `DELETE /api/playlists/<id>/musicas/<mid>`
 - `GET /api/playlists/publicas`
 
-### Usuario
-
-- `GET /api/usuario/perfil`
-- `PUT /api/usuario/perfil`
-- `POST /api/usuario/favoritos/<id>`
-- `DELETE /api/usuario/favoritos/<id>`
-
 ### Billing
 
 - `GET /api/billing/plans`
@@ -239,51 +235,41 @@ python tests/test_application.py
 - `POST /api/auth/solicitar-reset`
 - `POST /api/auth/redefinir-senha`
 
-## SaaS: Planos e Cobranca
+### Usuario
 
-- O sistema possui modelos de `Plan`, `Subscription` e `UsageEvent`.
-- O tenant de cada usuario pode ter uma assinatura ativa vinculada a um plano.
-- O limite de playlists privadas e controlado pelo plano atual do tenant.
-- O endpoint de webhook Stripe (`/api/billing/webhook`) atualiza a assinatura automaticamente.
+- `GET /api/usuario/perfil`
+- `PUT /api/usuario/perfil`
+- `POST /api/usuario/favoritos/<id>`
+- `DELETE /api/usuario/favoritos/<id>`
 
-Fluxo recomendado:
+## Stripe: Fluxo Rapido
 
 1. Configure `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET`.
-2. Cadastre `stripe_price_id` nos planos.
-3. Inicie checkout via `POST /api/billing/checkout`.
-4. Deixe o webhook sincronizar status e periodo da assinatura.
+2. Preencha `STRIPE_PRICE_ID_FREE`, `STRIPE_PRICE_ID_PRO` e `STRIPE_PRICE_ID_BUSINESS`.
+3. Rode `flask --app run.py sync-stripe-prices` para atualizar o banco.
+4. Chame `POST /api/billing/checkout` para iniciar assinatura.
+5. Aponte o webhook Stripe para `POST /api/billing/webhook`.
+6. O sistema sincroniza status da assinatura por tenant.
 
-## Seguranca e Producao
+## Seguranca e Observabilidade
 
-- Login pode exigir e-mail verificado (`REQUIRE_EMAIL_VERIFICATION=true`).
-- Reset de senha por token com expiracao configuravel (`PASSWORD_RESET_TOKEN_EXP_HOURS`).
-- Auditoria de eventos sensiveis em `audit_logs`.
-- Rate limit para rotas `/api/*` configuravel por `RATE_LIMIT_REQUESTS_PER_MINUTE`.
-- Observabilidade com logs de duracao por request e Sentry opcional (`SENTRY_DSN`).
-- Producao deve usar `DATABASE_URL` com PostgreSQL e cookies seguras.
+- login pode exigir e-mail verificado (`REQUIRE_EMAIL_VERIFICATION`)
+- reset de senha por token com expiracao
+- envio real de email via SMTP para verificacao/reset (`EMAIL_DELIVERY_ENABLED=true`)
+- auditoria de eventos sensiveis em `audit_logs`
+- suporte para API keys por tenant
+- rate limit para rotas `/api/*` (exceto webhook Stripe)
+- log de duracao por request (`X-Request-Duration-Ms`)
+- integracao opcional com Sentry via `SENTRY_DSN`
 
-## Troubleshooting
-
-### `ModuleNotFoundError: No module named 'app'`
-
-Use uma destas abordagens:
-
-1. Execute comandos a partir da pasta raiz do projeto (`Streaming Music`).
-2. Prefira `flask --app run.py ...` em vez de imports de modulo ambiguos.
-3. Se rodar Flask a partir da pasta pai, use aspas no app path por causa do espaco no nome da pasta:
+## Testes
 
 ```bash
-flask --app "Streaming Music.run" routes
-```
+# executa a suite principal
+python -m unittest tests/test_application.py
 
-### Audio nao toca no player
-
-1. Rode novamente `flask --app run.py seed-db` para garantir os arquivos em `app/static/music`.
-2. Verifique se o arquivo da musica existe no caminho retornado por `arquivo_url`.
-3. Abra diretamente uma URL de audio no navegador, por exemplo:
-
-```text
-http://localhost:5000/static/music/aurora-pulse-neon-nights-01-city-lights.wav
+# modo verboso com resumo APROVADO/REPROVADO
+python tests/test_application.py
 ```
 
 ## Deploy (referencia rapida)
@@ -292,6 +278,37 @@ Exemplo com Gunicorn:
 
 ```bash
 gunicorn -w 4 -b 0.0.0.0:8000 run:app
+```
+
+Checklist recomendado para producao:
+
+1. `DATABASE_URL` em PostgreSQL
+2. `SECRET_KEY` forte
+3. `REQUIRE_EMAIL_VERIFICATION=true`
+4. `STRIPE_*` configurado
+5. `SENTRY_DSN` (opcional)
+6. `flask --app run.py db upgrade` antes de subir
+
+## Troubleshooting
+
+### `ModuleNotFoundError: No module named 'app'`
+
+1. Execute comandos na raiz do projeto (`Streaming Music`).
+2. Prefira `flask --app run.py ...`.
+3. Se rodar a partir da pasta pai, use aspas por causa do espaco:
+
+```bash
+flask --app "Streaming Music.run" routes
+```
+
+### Audio nao toca no player
+
+1. Rode `flask --app run.py seed-db` para garantir arquivos em `app/static/music`.
+2. Verifique o caminho de `arquivo_url`.
+3. Teste URL direta no navegador, por exemplo:
+
+```text
+http://localhost:5000/static/music/aurora-pulse-neon-nights-01-city-lights.wav
 ```
 
 ## Licenca

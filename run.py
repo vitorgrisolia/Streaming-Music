@@ -29,6 +29,14 @@ SEED_AUDIO_SAMPLE_RATE = 22050
 SEED_AUDIO_AMPLITUDE = 0.25
 
 
+def _plan_price_map():
+    return {
+        'free': app.config.get('STRIPE_PRICE_ID_FREE'),
+        'pro': app.config.get('STRIPE_PRICE_ID_PRO'),
+        'business': app.config.get('STRIPE_PRICE_ID_BUSINESS'),
+    }
+
+
 def _slugify(value):
     normalized = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
     normalized = normalized.lower()
@@ -225,6 +233,7 @@ def seed_db():
             descricao='Plano inicial para testes',
             preco_mensal_centavos=0,
             moeda='brl',
+            stripe_price_id=_plan_price_map().get('free'),
             limite_playlists_privadas=1,
             limite_usuarios=1,
             ativo=True,
@@ -235,6 +244,7 @@ def seed_db():
             descricao='Plano para projetos em crescimento',
             preco_mensal_centavos=4900,
             moeda='brl',
+            stripe_price_id=_plan_price_map().get('pro'),
             limite_playlists_privadas=25,
             limite_usuarios=5,
             ativo=True,
@@ -245,6 +255,7 @@ def seed_db():
             descricao='Plano para equipes com maior volume',
             preco_mensal_centavos=14900,
             moeda='brl',
+            stripe_price_id=_plan_price_map().get('business'),
             limite_playlists_privadas=200,
             limite_usuarios=25,
             ativo=True,
@@ -386,6 +397,28 @@ def seed_db():
     print(f'Playlists criadas: {Playlist.query.count()}')
     print(f'Audios em: {music_dir}')
     print('Login demo: demo@streamingmusic.local / 123456')
+
+
+@app.cli.command('sync-stripe-prices')
+def sync_stripe_prices():
+    """Sincroniza stripe_price_id dos planos usando variaveis de ambiente."""
+    price_map = _plan_price_map()
+    atualizados = 0
+
+    for codigo, stripe_price_id in price_map.items():
+        if not stripe_price_id:
+            continue
+        plano = Plan.query.filter_by(codigo=codigo).first()
+        if not plano:
+            continue
+        plano.stripe_price_id = stripe_price_id
+        atualizados += 1
+
+    if atualizados:
+        db.session.commit()
+        print(f'Stripe price IDs atualizados para {atualizados} plano(s).')
+    else:
+        print('Nenhum plano atualizado. Verifique STRIPE_PRICE_ID_* no .env.')
 
 
 if __name__ == '__main__':

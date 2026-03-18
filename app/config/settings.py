@@ -50,6 +50,19 @@ class Config:
     STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
     STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+    STRIPE_PRICE_ID_FREE = os.getenv('STRIPE_PRICE_ID_FREE')
+    STRIPE_PRICE_ID_PRO = os.getenv('STRIPE_PRICE_ID_PRO')
+    STRIPE_PRICE_ID_BUSINESS = os.getenv('STRIPE_PRICE_ID_BUSINESS')
+
+    APP_BASE_URL = os.getenv('APP_BASE_URL') or 'http://localhost:5000'
+    EMAIL_DELIVERY_ENABLED = _env_bool('EMAIL_DELIVERY_ENABLED', False)
+    SMTP_HOST = os.getenv('SMTP_HOST')
+    SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
+    SMTP_USERNAME = os.getenv('SMTP_USERNAME')
+    SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+    SMTP_USE_TLS = _env_bool('SMTP_USE_TLS', True)
+    SMTP_USE_SSL = _env_bool('SMTP_USE_SSL', False)
+    MAIL_FROM = os.getenv('MAIL_FROM') or 'no-reply@streamingmusic.local'
 
     FREE_PLAN_PRIVATE_PLAYLIST_LIMIT = int(os.getenv('FREE_PLAN_PRIVATE_PLAYLIST_LIMIT', '1'))
 
@@ -99,6 +112,7 @@ class TestingConfig(Config):
     REQUIRE_EMAIL_VERIFICATION = False
     AUTO_VERIFY_EMAIL = True
     RATE_LIMIT_ENABLED = False
+    EMAIL_DELIVERY_ENABLED = False
 
 
 config = {
