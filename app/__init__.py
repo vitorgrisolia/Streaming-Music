@@ -33,11 +33,13 @@ def create_app(config_name=None):
 
     # Registra blueprints
     from app.views.auth_routes import auth_bp
+    from app.views.billing_routes import billing_bp
     from app.views.music_routes import music_bp
     from app.views.playlist_routes import playlist_bp
     from app.views.api_routes import api_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(billing_bp)
     app.register_blueprint(music_bp)
     app.register_blueprint(playlist_bp)
     app.register_blueprint(api_bp, url_prefix='/api')

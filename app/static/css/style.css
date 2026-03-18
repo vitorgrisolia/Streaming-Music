@@ -326,6 +326,26 @@ body::before {
   background: #f2f7ff;
 }
 
+.chip-active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
+}
+
+.chip-muted {
+  color: var(--text);
+  background: #eceff5;
+}
+
+.plan-card {
+  border-width: 1px;
+}
+
+.plan-card-active {
+  border-color: rgba(15, 157, 141, 0.48);
+  box-shadow: 0 16px 36px rgba(15, 157, 141, 0.23);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

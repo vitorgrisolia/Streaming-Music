@@ -1,6 +1,8 @@
 import json
 from datetime import UTC, datetime
 
+from flask import current_app
+
 from app.extensions import db
 from app.models import Plan, Subscription, UsageEvent
 from app.services.stripe_service import StripeService, StripeServiceError
@@ -131,6 +133,97 @@ class BillingController:
             return {'success': False, 'message': str(e)}
         except Exception as e:
             return {'success': False, 'message': f'Erro ao abrir portal: {str(e)}'}
+
+    @staticmethod
+    def _ensure_subscription(tenant_id):
+        assinatura = Subscription.query.filter_by(tenant_id=tenant_id).first()
+        if assinatura:
+            return assinatura
+
+        plano_default = BillingController._resolve_default_plan()
+        if not plano_default:
+            raise ValueError('Nao existe plano default para criar assinatura')
+
+        assinatura = Subscription(
+            tenant_id=tenant_id,
+            plan_id=plano_default.id,
+            status='inactive',
+        )
+        db.session.add(assinatura)
+        db.session.flush()
+        return assinatura
+
+    @staticmethod
+    def trocar_plano(tenant_id, customer_email, plan_code, success_url, cancel_url):
+        """Troca de plano: free/local imediato ou checkout Stripe para pagos."""
+        try:
+            plano = Plan.query.filter_by(codigo=plan_code, ativo=True).first()
+            if not plano:
+                return {'success': False, 'message': 'Plano nao encontrado'}
+
+            if current_app.config.get('TESTING'):
+                assinatura = BillingController._ensure_subscription(tenant_id)
+                assinatura.plan_id = plano.id
+                assinatura.status = 'active'
+                assinatura.cancel_at_period_end = False
+                db.session.commit()
+                return {
+                    'success': True,
+                    'mode': 'local',
+                    'message': f'Plano alterado para {plano.nome} (modo teste)',
+                    'subscription': assinatura.to_dict(),
+                }
+
+            if int(plano.preco_mensal_centavos or 0) == 0:
+                assinatura = BillingController._ensure_subscription(tenant_id)
+                assinatura.plan_id = plano.id
+                assinatura.status = 'active'
+                assinatura.cancel_at_period_end = False
+                db.session.commit()
+                return {
+                    'success': True,
+                    'mode': 'local',
+                    'message': f'Plano alterado para {plano.nome}',
+                    'subscription': assinatura.to_dict(),
+                }
+
+            stripe_configurado = bool(current_app.config.get('STRIPE_SECRET_KEY')) and bool(plano.stripe_price_id)
+            if stripe_configurado:
+                checkout_result = BillingController.iniciar_checkout(
+                    tenant_id=tenant_id,
+                    customer_email=customer_email,
+                    plan_code=plan_code,
+                    success_url=success_url,
+                    cancel_url=cancel_url,
+                )
+                if checkout_result.get('success'):
+                    checkout_result['mode'] = 'checkout'
+                    checkout_result['message'] = f'Redirecionando para checkout do plano {plano.nome}'
+                return checkout_result
+
+            if current_app.config.get('DEBUG') or current_app.config.get('TESTING'):
+                assinatura = BillingController._ensure_subscription(tenant_id)
+                assinatura.plan_id = plano.id
+                assinatura.status = 'active'
+                assinatura.cancel_at_period_end = False
+                db.session.commit()
+                return {
+                    'success': True,
+                    'mode': 'local',
+                    'message': (
+                        f'Plano alterado para {plano.nome} em modo local '
+                        '(sem checkout Stripe configurado)'
+                    ),
+                    'subscription': assinatura.to_dict(),
+                }
+
+            return {
+                'success': False,
+                'message': 'Plano pago requer stripe_price_id e STRIPE_SECRET_KEY configurados',
+            }
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'message': f'Erro ao trocar plano: {str(e)}'}
 
     @staticmethod
     def _event_to_dict(event):

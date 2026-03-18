@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Planos | {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<section class="page-header" data-animate>
+  <p class="kicker">Billing SaaS</p>
+  <h1 class="page-title">Planos e assinatura</h1>
+  <p class="page-subtitle">
+    Compare os planos <strong>Free</strong>, <strong>Pro</strong> e <strong>Business</strong>
+    e veja a assinatura ativa do tenant atual.
+  </p>
+</section>
+
+<section class="panel" data-animate>
+  <div class="section-head">
+    <h2 class="section-title">Assinatura ativa</h2>
+  </div>
+  {% if assinatura %}
+    <p class="meta-line">
+      Status:
+      <span class="chip {% if assinatura_status in ['active', 'trialing'] %}chip-active{% else %}chip-muted{% endif %}">
+        {{ assinatura_status|upper }}
+      </span>
+    </p>
+    <p class="meta-line">Plano atual: <strong>{{ assinatura.plan.nome if assinatura.plan else 'Nao definido' }}</strong></p>
+    <p class="meta-line">Tenant ID: <strong>{{ assinatura.tenant_id }}</strong></p>
+  {% else %}
+    <p class="empty-state">Nenhuma assinatura encontrada para este tenant.</p>
+  {% endif %}
+</section>
+
+<section data-animate>
+  <div class="section-head">
+    <h2 class="section-title">Planos disponiveis</h2>
+  </div>
+  <div class="card-grid">
+    {% for plano in planos %}
+      <article class="music-card plan-card {% if assinatura_plan_id == plano.id and assinatura_status in ['active', 'trialing'] %}plan-card-active{% endif %}">
+        <span class="card-index">{{ plano.codigo|upper }}</span>
+        <h3 class="music-title">{{ plano.nome }}</h3>
+        <p class="meta-line">{{ plano.descricao or 'Plano sem descricao' }}</p>
+
+        <div class="meta-pills">
+          <span class="chip">R$ {{ '%.2f'|format((plano.preco_mensal_centavos or 0) / 100) }}/mes</span>
+          <span class="chip">{{ plano.moeda|upper }}</span>
+          <span class="chip">{{ plano.limite_playlists_privadas }} playlists privadas</span>
+          <span class="chip">{{ plano.limite_usuarios }} usuarios</span>
+        </div>
+
+        {% if assinatura_plan_id == plano.id and assinatura_status in ['active', 'trialing'] %}
+          <div class="inline-actions">
+            <span class="chip chip-active">Assinatura ativa</span>
+          </div>
+        {% else %}
+          <form method="post" action="{{ url_for('billing.trocar_plano') }}" class="inline-actions">
+            <input type="hidden" name="plan_code" value="{{ plano.codigo }}">
+            {% if plano.codigo == 'free' %}
+              <button type="submit" class="btn btn-ghost">Mudar para Free</button>
+            {% else %}
+              <button type="submit" class="btn">Mudar para {{ plano.nome }}</button>
+            {% endif %}
+          </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

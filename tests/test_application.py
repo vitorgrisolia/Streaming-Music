@@ -25,6 +25,8 @@ class ApplicationApiTestCase(unittest.TestCase):
         'test_webhook_checkout_atualiza_assinatura': 'Valida webhook Stripe criando/atualizando assinatura',
         'test_solicitar_reset_e_redefinir_senha': 'Valida fluxo de reset de senha por token',
         'test_login_exige_email_verificado_quando_config_ativa': 'Valida bloqueio de login sem email verificado',
+        'test_tela_planos_exibe_tres_planos_e_assinatura_ativa': 'Valida tela /billing/planos com Free, Pro, Business e assinatura ativa',
+        'test_trocar_plano_pela_tela_billing': 'Valida troca de plano pela tela /billing/planos',
     }
 
     def setUp(self):
@@ -305,6 +307,38 @@ class ApplicationApiTestCase(unittest.TestCase):
         self.assertFalse(resultado['success'])
         self.assertIn('verifique', resultado['message'].lower())
         print('[APROVADO] Login bloqueado para conta sem email verificado.')
+
+    def test_tela_planos_exibe_tres_planos_e_assinatura_ativa(self):
+        self._describe_test()
+        self._login('teste@local.com')
+
+        response = self.client.get('/billing/planos')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.get_data(as_text=True)
+        self.assertIn('Free', html)
+        self.assertIn('Pro', html)
+        self.assertIn('Business', html)
+        self.assertIn('Assinatura ativa', html)
+        self.assertIn('Plano atual: <strong>Free</strong>', html)
+        print('[APROVADO] Tela de planos exibiu 3 planos e assinatura ativa do tenant default.')
+
+    def test_trocar_plano_pela_tela_billing(self):
+        self._describe_test()
+        self._login('teste@local.com')
+
+        response = self.client.post(
+            '/billing/planos/trocar',
+            data={'plan_code': 'pro'},
+            follow_redirects=False,
+        )
+        self.assertIn(response.status_code, (302, 303))
+
+        assinatura = Subscription.query.filter_by(tenant_id=self.user_default.tenant_id).first()
+        self.assertIsNotNone(assinatura)
+        self.assertEqual(assinatura.plan_id, self.plan_pro.id)
+        self.assertEqual(assinatura.status, 'active')
+        print('[APROVADO] Troca de plano pela tela de billing atualizou assinatura para Pro.')
 
 
 if __name__ == '__main__':
