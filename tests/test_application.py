@@ -1,6 +1,7 @@
 import json
 import sys
 import unittest
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,10 @@ class ApplicationApiTestCase(unittest.TestCase):
         'test_login_exige_email_verificado_quando_config_ativa': 'Valida bloqueio de login sem email verificado',
         'test_tela_planos_exibe_tres_planos_e_assinatura_ativa': 'Valida tela /billing/planos com Free, Pro, Business e assinatura ativa',
         'test_trocar_plano_pela_tela_billing': 'Valida troca de plano pela tela /billing/planos',
+        'test_fluxo_completo_cadastro_verificacao_login_upgrade_webhook': 'Valida fluxo completo SaaS: cadastro, verificacao, login, upgrade e webhook',
+        'test_webhook_invalido_retorna_erro_controlado': 'Valida falha de webhook invalido',
+        'test_reset_token_expirado_bloqueia_redefinicao': 'Valida bloqueio para token de reset expirado',
+        'test_downgrade_para_free_funciona': 'Valida downgrade de Pro para Free',
     }
 
     def setUp(self):
@@ -339,6 +344,120 @@ class ApplicationApiTestCase(unittest.TestCase):
         self.assertEqual(assinatura.plan_id, self.plan_pro.id)
         self.assertEqual(assinatura.status, 'active')
         print('[APROVADO] Troca de plano pela tela de billing atualizou assinatura para Pro.')
+
+    def test_fluxo_completo_cadastro_verificacao_login_upgrade_webhook(self):
+        self._describe_test()
+        self.app.config['AUTO_VERIFY_EMAIL'] = False
+        self.app.config['REQUIRE_EMAIL_VERIFICATION'] = True
+
+        with self.app.test_request_context('/auth/register', method='POST'):
+            cadastro = AuthController.registrar_usuario(
+                nome='Novo Usuario',
+                email='novo@local.com',
+                senha='SenhaNova123',
+            )
+        self.assertTrue(cadastro['success'])
+        token_verificacao = cadastro.get('email_verification_token')
+        self.assertTrue(token_verificacao)
+
+        with self.app.test_request_context('/api/auth/verificar-email', method='POST'):
+            verificacao = AuthController.verificar_email_token(token_verificacao)
+        self.assertTrue(verificacao['success'])
+
+        with self.app.test_request_context('/auth/login', method='POST'):
+            login = AuthController.fazer_login('novo@local.com', 'SenhaNova123')
+        self.assertTrue(login['success'])
+
+        novo_usuario = User.query.filter_by(email='novo@local.com').first()
+        self.assertIsNotNone(novo_usuario)
+
+        self._login('novo@local.com', 'SenhaNova123')
+        troca = self.client.post(
+            '/billing/planos/trocar',
+            data={'plan_code': 'pro'},
+            follow_redirects=False,
+        )
+        self.assertIn(troca.status_code, (302, 303))
+
+        assinatura = Subscription.query.filter_by(tenant_id=novo_usuario.tenant_id).first()
+        self.assertIsNotNone(assinatura)
+        self.assertEqual(assinatura.plan_id, self.plan_pro.id)
+
+        payload = {
+            'type': 'checkout.session.completed',
+            'data': {
+                'object': {
+                    'id': 'cs_test_full_flow',
+                    'customer': 'cus_full_flow',
+                    'subscription': 'sub_full_flow',
+                    'metadata': {
+                        'tenant_id': str(novo_usuario.tenant_id),
+                        'plan_id': str(self.plan_pro.id),
+                        'plan_code': 'pro',
+                    },
+                }
+            },
+        }
+        webhook = self.client.post('/api/billing/webhook', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(webhook.status_code, 200)
+
+        assinatura = Subscription.query.filter_by(tenant_id=novo_usuario.tenant_id).first()
+        self.assertEqual(assinatura.status, 'active')
+        self.assertEqual(assinatura.stripe_subscription_id, 'sub_full_flow')
+        print('[APROVADO] Fluxo completo SaaS validado com sucesso.')
+
+    def test_webhook_invalido_retorna_erro_controlado(self):
+        self._describe_test()
+        self.app.config['STRIPE_WEBHOOK_SECRET'] = 'whsec_obrigatorio_teste'
+
+        response = self.client.post(
+            '/api/billing/webhook',
+            data='{"payload":"invalido"}',
+            headers={'Stripe-Signature': 'assinatura_invalida'},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        payload = response.get_json()
+        self.assertFalse(payload['success'])
+        self.assertIn('invalida', payload.get('message', '').lower())
+        print('[APROVADO] Webhook invalido retornou erro controlado.')
+
+    def test_reset_token_expirado_bloqueia_redefinicao(self):
+        self._describe_test()
+        resposta = self.client.post('/api/auth/solicitar-reset', json={'email': 'teste@local.com'})
+        self.assertEqual(resposta.status_code, 200)
+        payload = resposta.get_json()
+        token = payload.get('reset_token')
+        self.assertTrue(token)
+
+        usuario = User.query.filter_by(email='teste@local.com').first()
+        usuario.reset_senha_expira_em = datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=1)
+        db.session.commit()
+
+        redefinir = self.client.post(
+            '/api/auth/redefinir-senha',
+            json={'token': token, 'nova_senha': 'OutraSenha123'},
+        )
+        self.assertEqual(redefinir.status_code, 400)
+        payload_redefinir = redefinir.get_json()
+        self.assertFalse(payload_redefinir['success'])
+        self.assertIn('expirado', payload_redefinir.get('message', '').lower())
+        print('[APROVADO] Token expirado bloqueou redefinicao de senha.')
+
+    def test_downgrade_para_free_funciona(self):
+        self._describe_test()
+        self._login('teste@local.com')
+
+        up = self.client.post('/billing/planos/trocar', data={'plan_code': 'pro'}, follow_redirects=False)
+        self.assertIn(up.status_code, (302, 303))
+
+        down = self.client.post('/billing/planos/trocar', data={'plan_code': 'free'}, follow_redirects=False)
+        self.assertIn(down.status_code, (302, 303))
+
+        assinatura = Subscription.query.filter_by(tenant_id=self.user_default.tenant_id).first()
+        self.assertEqual(assinatura.plan_id, self.plan_free.id)
+        self.assertEqual(assinatura.status, 'active')
+        print('[APROVADO] Downgrade para Free aplicado com sucesso.')
 
 
 if __name__ == '__main__':
