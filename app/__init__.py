@@ -51,3 +51,7 @@ def create_app(config_name=None):
     app.register_blueprint(api_bp, url_prefix='/api')
 
     return app
+
+
+# Compatibilidade para WSGI servers configurados com `app:app`.
+app = create_app()
