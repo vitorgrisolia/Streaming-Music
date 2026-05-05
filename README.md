@@ -1,84 +1,72 @@
 # Streaming Music Platform
 
-Aplicação web de streaming de música com Flask (MVC), interface web, API REST e suporte SaaS com multi-tenant, planos, cobrança e segurança reforçada.
+Aplicacao web de streaming de musica com Flask (MVC), interface web, API REST e suporte SaaS com multi-tenant, planos, cobranca e seguranca reforcada.
 
-## Visão Geral
+## Visao geral
 
-O projeto inclui:
+Este projeto inclui:
 
-- autenticação e sessão de usuários
-- verificação de e-mail e reset de senha por token
-- catálogo de artistas, álbuns e músicas
-- player HTML5 para reprodução de áudio
-- criação e gerenciamento de playlists
-- favoritos por usuário
+- autenticacao e sessao de usuarios
+- verificacao de e-mail e reset de senha por token
+- catalogo de artistas, albuns e musicas
+- player HTML5
+- criacao e gerenciamento de playlists
+- favoritos por usuario
 - isolamento por tenant (multi-tenant)
-- planos (`Plan`) e assinatura por tenant (`Subscription`)
-- eventos de uso para controle de limite (`UsageEvent`)
-- webhook Stripe para sincronizar cobrança
-- auditoria de eventos sensíveis (`AuditLog`)
-- suporte a API keys (`ApiKey`)
-- rate limit para API e observabilidade por request
+- planos (`Plan`) e assinaturas (`Subscription`)
+- eventos de uso (`UsageEvent`) para controle de limite
+- webhook Stripe para sincronizar cobranca
+- auditoria (`AuditLog`)
+- API keys por tenant (`ApiKey`)
+- rate limit para `/api/*` e observabilidade por request
 
 ## Stack
 
-- Python 3.8+
-- Flask
+- Python 3.12 (recomendado)
+- Flask 3
 - Flask-SQLAlchemy
 - Flask-Migrate (Alembic)
 - Flask-Login
 - Flask-Bcrypt
 - Flask-CORS
-- Stripe API
+- Stripe SDK
 - sentry-sdk (opcional)
 - python-dotenv
+- gunicorn
 
-## Estrutura do Projeto
+## Estrutura do projeto
 
 ```text
 Streaming Music/
 |-- app/
 |   |-- __init__.py
-|   |-- extensions.py
-|   |-- config/
-|   |   `-- settings.py
+|   |-- config/settings.py
 |   |-- controllers/
-|   |   |-- auth_controller.py
-|   |   |-- billing_controller.py
-|   |   |-- music_controller.py
-|   |   `-- playlist_controller.py
 |   |-- models/
-|   |   |-- tenant.py
-|   |   |-- membership.py
-|   |   |-- plan.py
-|   |   |-- subscription.py
-|   |   |-- usage_event.py
-|   |   |-- audit_log.py
-|   |   `-- api_key.py
 |   |-- services/
-|   |   |-- stripe_service.py
-|   |   `-- email_service.py
-|   |-- views/
-|   |   |-- api_routes.py
-|   |   |-- billing_routes.py
-|   |   `-- ...
 |   |-- templates/
-|   |   |-- billing_planos.html
-|   |   `-- ...
-|   `-- static/
+|   |-- static/
+|   `-- views/
 |-- migrations/
-|   `-- versions/
-|-- instance/
 |-- tests/
 |-- run.py
 |-- requirements.txt
-|-- .env
+|-- render.yaml
+|-- .python-version
+|-- .env.example
 `-- README.md
 ```
 
-## Instalação
+## Requisitos
 
-### 1. Clonar repositório
+- Python 3.12
+- Git
+- (Opcional) conta Stripe para billing real
+- (Producao) PostgreSQL (ex.: Neon)
+
+## Setup local
+
+### 1. Clonar repositorio
 
 ```bash
 git clone <seu-repositorio>
@@ -97,125 +85,129 @@ venv\Scripts\Activate.ps1
 source venv/bin/activate
 ```
 
-### 3. Instalar dependências
+### 3. Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Recomendado no Windows (garante instalação no ambiente correto):
+### 4. Configurar variaveis
 
-```bash
-venv\Scripts\python.exe -m pip install -r requirements.txt
-```
+Use `.env.example` como base e crie `.env` local.
 
-### 4. Configurar variáveis de ambiente
-
-Crie um arquivo `.env` na raiz do projeto:
+Exemplo minimo local:
 
 ```env
 FLASK_APP=run.py
 FLASK_ENV=development
-
 APP_NAME=Vitorando Music
-SECRET_KEY=sua-chave-secreta
+SECRET_KEY=change-me
 APP_BASE_URL=http://localhost:5000
-
 DATABASE_URL=sqlite:///streaming_music.db
 DEFAULT_TENANT_SLUG=default
 DEFAULT_TENANT_NAME=Workspace Padrao
-
-REQUIRE_EMAIL_VERIFICATION=false
-AUTO_VERIFY_EMAIL=true
-PASSWORD_RESET_TOKEN_EXP_HOURS=1
-
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_REQUESTS_PER_MINUTE=120
-
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_PUBLISHABLE_KEY=pk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
-STRIPE_PRICE_ID_FREE=price_xxx_free
-STRIPE_PRICE_ID_PRO=price_xxx_pro
-STRIPE_PRICE_ID_BUSINESS=price_xxx_business
-
-EMAIL_DELIVERY_ENABLED=false
-SMTP_HOST=smtp.seuprovedor.com
-SMTP_PORT=587
-SMTP_USERNAME=usuario
-SMTP_PASSWORD=senha
-SMTP_USE_TLS=true
-SMTP_USE_SSL=false
-MAIL_FROM=no-reply@streamingmusic.local
-
-SENTRY_DSN=
 ```
 
-Observações:
+## Variaveis de ambiente
 
-- Se `DATABASE_URL` não for informada, o projeto usa SQLite local em `instance/streaming_music.db`.
-- Para produção, use PostgreSQL em `DATABASE_URL`.
-- Em produção, recomenda-se `REQUIRE_EMAIL_VERIFICATION=true`.
+### Obrigatorias em producao
 
-## Banco de Dados e Migrations
+- `DATABASE_URL`
+- `APP_BASE_URL`
+- `SECRET_KEY`
+
+### Recomendadas em producao
+
+- `FLASK_ENV=production`
+- `PYTHON_DOTENV_DISABLED=1`
+- `REQUIRE_EMAIL_VERIFICATION=true`
+- `AUTO_VERIFY_EMAIL=false`
+- `RATE_LIMIT_ENABLED=true`
+- `RATE_LIMIT_REQUESTS_PER_MINUTE=120`
+
+### Stripe
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_ID_FREE`
+- `STRIPE_PRICE_ID_PRO`
+- `STRIPE_PRICE_ID_BUSINESS`
+
+### SMTP (opcional)
+
+- `EMAIL_DELIVERY_ENABLED`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_USE_TLS`
+- `SMTP_USE_SSL`
+- `MAIL_FROM`
+
+### Observabilidade
+
+- `SENTRY_DSN` (opcional)
+
+## Comandos CLI
 
 ```bash
-# aplicar todas as migrations
+# aplica migrations
 flask --app run.py db upgrade
 
-# inicializar tabelas (modo rápido local)
+# inicializa banco e garante tenant default + planos base
 flask --app run.py init-db
 
-# resetar e popular banco com seed de demo
-flask --app run.py seed-db
+# garante planos sem apagar dados
+flask --app run.py ensure-plans
 
-# sincronizar stripe_price_id dos planos via .env
+# sincroniza stripe_price_id dos planos via env
 flask --app run.py sync-stripe-prices
+
+# bootstrap seguro para primeiro deploy (nao destrutivo)
+flask --app run.py bootstrap-deploy
+
+# seed demo (destrutivo: drop_all + create_all)
+flask --app run.py seed-db
 ```
 
-Migrations SaaS adicionadas:
+## Seed demo
 
-- `004_create_plans`
-- `005_create_subscriptions`
-- `006_create_usage_events_and_limits`
-- `007_add_email_verification_fields`
-- `008_create_audit_logs`
-- `009_add_api_keys_or_access_tokens`
+`seed-db` cria dados de demonstracao, incluindo:
 
-## Seed de Demo
+- tenant default
+- usuarios demo
+- planos free/pro/business
+- assinatura ativa no tenant default
+- catalogo de musicas e playlists
+- arquivos `.wav` em `app/static/music`
 
-O comando `seed-db`:
+Credenciais demo:
 
-- remove e recria tabelas (`drop_all` + `create_all`)
-- cria tenant default
-- cria 2 usuários de demo
-- cria memberships
-- cria 3 planos (`free`, `pro`, `business`)
-- cria assinatura ativa para o tenant default
-- cria 5 artistas, 5 álbuns e 20 músicas
-- cria 3 playlists
-- gera 20 arquivos de áudio `.wav` em `app/static/music`
+- `demo@streamingmusic.local / 123456`
+- `curador@streamingmusic.local / 123456`
 
-Credenciais de demo:
-
-- `demo@streamingmusic.local` / `123456`
-- `curador@streamingmusic.local` / `123456`
-
-## Executando a Aplicação
+## Executar aplicacao
 
 ```bash
-# opção direta
+# modo direto
 python run.py
 
-# opção Flask CLI
+# Flask CLI (debug)
 flask --app run.py run --debug
 ```
 
-Aplicação: [http://localhost:5000](http://localhost:5000)
+Aplicacao local: [http://localhost:5000](http://localhost:5000)
 
-## Endpoints da API (resumo)
+## Testes
 
-### Músicas
+```bash
+python -m unittest tests/test_application.py
+```
+
+## Endpoints (resumo)
+
+### Musicas
 
 - `GET /api/musicas`
 - `GET /api/musicas/<id>`
@@ -241,193 +233,182 @@ Aplicação: [http://localhost:5000](http://localhost:5000)
 - `POST /api/billing/portal`
 - `POST /api/billing/webhook`
 
-### Auth e Segurança
+### Auth
 
 - `POST /api/auth/verificar-email`
 - `POST /api/auth/solicitar-reset`
 - `POST /api/auth/redefinir-senha`
 
-### Usuário
+### Usuario
 
 - `GET /api/usuario/perfil`
 - `PUT /api/usuario/perfil`
 - `POST /api/usuario/favoritos/<id>`
 - `DELETE /api/usuario/favoritos/<id>`
 
-## Tela de Planos (Web)
+## Deploy em nuvem (Render + Neon)
 
-- `GET /billing/planos` (login obrigatório)
-- `POST /billing/planos/trocar` (troca de plano pela interface)
+Este repositorio inclui `render.yaml` para Blueprint no Render.
 
-Comportamento de troca:
+### 1. Banco (Neon)
 
-- `free`: troca imediata
-- `pro` e `business`: usa checkout Stripe quando configurado
-- em ambiente de desenvolvimento/teste sem Stripe, permite troca local para facilitar validação
-
-## Stripe: Fluxo Rápido
-
-1. Configure `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET`.
-2. Preencha `STRIPE_PRICE_ID_FREE`, `STRIPE_PRICE_ID_PRO` e `STRIPE_PRICE_ID_BUSINESS`.
-3. Rode `flask --app run.py sync-stripe-prices` para atualizar o banco.
-4. Chame `POST /api/billing/checkout` para iniciar assinatura.
-5. Aponte o webhook Stripe para `POST /api/billing/webhook`.
-6. O sistema sincroniza status da assinatura por tenant.
-
-## Segurança e Observabilidade
-
-- login pode exigir e-mail verificado (`REQUIRE_EMAIL_VERIFICATION`)
-- reset de senha por token com expiração
-- envio real de e-mail via SMTP para verificação/reset (`EMAIL_DELIVERY_ENABLED=true`)
-- auditoria de eventos sensíveis em `audit_logs`
-- suporte para API keys por tenant
-- rate limit para rotas `/api/*` (exceto webhook Stripe)
-- log de duração por request (`X-Request-Duration-Ms`)
-- integração opcional com Sentry via `SENTRY_DSN`
-
-## Testes
-
-```bash
-# executa a suíte principal
-python -m unittest tests/test_application.py
-
-# modo verboso com resumo APROVADO/REPROVADO
-python tests/test_application.py
-```
-
-## Deploy (referência rápida)
-
-Exemplo com Gunicorn:
-
-```bash
-gunicorn -w 4 -b 0.0.0.0:8000 run:app
-```
-
-Checklist recomendado para produção:
-
-1. `DATABASE_URL` em PostgreSQL
-2. `SECRET_KEY` forte
-3. `REQUIRE_EMAIL_VERIFICATION=true`
-4. `STRIPE_*` configurado
-5. `SENTRY_DSN` (opcional)
-6. `flask --app run.py db upgrade` antes de subir
-
-## Troubleshooting
-
-### `ModuleNotFoundError: No module named 'app'`
-
-1. Execute comandos na raiz do projeto (`Streaming Music`).
-2. Prefira `flask --app run.py ...`.
-3. Se rodar a partir da pasta pai, use aspas por causa do espaço:
-
-```bash
-flask --app "Streaming Music.run" routes
-```
-
-### Áudio não toca no player
-
-1. Rode `flask --app run.py seed-db` para garantir arquivos em `app/static/music`.
-2. Verifique o caminho de `arquivo_url`.
-3. Teste URL direta no navegador, por exemplo:
+1. Crie um projeto no Neon.
+2. Copie a URL de conexao PostgreSQL.
+3. Use formato recomendado:
 
 ```text
-http://localhost:5000/static/music/aurora-pulse-neon-nights-01-city-lights.wav
+postgresql://user:password@host:5432/dbname?sslmode=require
 ```
 
-### `Biblioteca stripe nao instalada no ambiente`
+### 2. Servico web (Render)
 
-Esse erro normalmente indica instalação fora do `venv` ativo.
+No Render, crie um `Web Service` para este repositorio.
+
+Build Command:
 
 ```bash
-# Windows (PowerShell)
-venv\Scripts\Activate.ps1
-venv\Scripts\python.exe -m pip install -r requirements.txt
-venv\Scripts\python.exe -c "import stripe; print(stripe._version.VERSION)"
+pip install -r requirements.txt
 ```
 
-### Deploy sobe, mas cai com `Exited with status 1` no Render
+Start Command:
 
-1. Confirme `DATABASE_URL` configurada no servico.
-2. Confirme `FLASK_ENV=production`.
-3. Fixe a versao de Python para 3.12 (ou superior) no Render.
-4. Rode no Shell do Render:
+```bash
+python -m gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+```
+
+### 3. Fixar versao do Python
+
+- O projeto usa `.python-version` com `3.12`.
+- No Render, mantenha tambem `PYTHON_VERSION=3.12` em `Environment`.
+
+### 4. Variaveis obrigatorias no Render
+
+- `DATABASE_URL`
+- `APP_BASE_URL`
+- `SECRET_KEY`
+
+Tambem configure:
+
+- `FLASK_ENV=production`
+- `PYTHON_DOTENV_DISABLED=1`
+
+### 5. Primeiro bootstrap apos deploy
+
+No Shell do Render:
 
 ```bash
 flask --app run.py db upgrade
 flask --app run.py bootstrap-deploy
 ```
 
-### `ImportError ... psycopg2 ... undefined symbol: _PyInterpreterState_Get`
+### 6. Stripe webhook
 
-Esse erro costuma acontecer quando o deploy usa Python 3.14 com `psycopg2-binary` antigo.
-
-1. Fixe a versao para Python 3.12.
-2. Limpe cache de build e redeploy.
-3. Verifique nos logs se os wheels nao estao mais como `cp314`.
-
-## Licença
-
-Uso educacional.
-
-## Deploy Render + Neon (Free)
-
-This repository now includes `render.yaml` for Render Blueprint deployment.
-
-### 1. Create infrastructure
-
-1. Create a PostgreSQL database on Neon and copy `DATABASE_URL`.
-2. Create a Web Service on Render from this repository (or use Blueprint sync).
-3. Set the required secrets in Render:
-   - `DATABASE_URL`
-   - `APP_BASE_URL`
-   - `STRIPE_*` values
-
-### 2. Build and start commands
-
-- Build: `pip install -r requirements.txt`
-- Start: `gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120`
-
-### 3. First deploy bootstrap (safe / non-destructive)
-
-Run these commands once in the Render Shell:
-
-```bash
-flask --app run.py db upgrade
-flask --app run.py bootstrap-deploy
-```
-
-Optional (if you changed Stripe Price IDs later):
-
-```bash
-flask --app run.py sync-stripe-prices
-```
-
-### 4. New CLI commands
-
-- `flask --app run.py ensure-plans`
-  - upserts `free`, `pro`, `business` plans without deleting data.
-- `flask --app run.py bootstrap-deploy`
-  - ensures DB tables, default tenant, base plans, and Stripe price sync.
-
-### 5. Stripe webhook
-
-Set your Stripe webhook endpoint to:
+Endpoint:
 
 ```text
-https://<your-render-domain>/api/billing/webhook
+https://<seu-dominio-render>/api/billing/webhook
 ```
 
-Recommended events:
+Eventos recomendados:
 
 - `checkout.session.completed`
 - `customer.subscription.created`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
 
-## Render MCP (AI Build Debug)
+## Render MCP (debug com IA)
 
-To debug failed deploys with AI tools (Cursor / Claude Code), connect Render MCP and use prompts like:
+Guia rapido em [docs/render-mcp.md](docs/render-mcp.md).
 
-- `Show my latest failed deploy logs for <service-name>`
-- `Diagnose root cause and propose exact build/start/env fixes`
-- `List missing environment variables used by this Flask app`
+Resumo:
+
+- Cursor: configurar `~/.cursor/mcp.json`
+- Claude Code: `claude mcp add ...`
+- Prompts uteis: logs de deploy, causa raiz, sugestao de fix em env/build/start
+
+## Troubleshooting
+
+### `Exited with status 127`
+
+Causa comum: comando de start nao encontrado.
+
+Use:
+
+```bash
+python -m gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+```
+
+### `Exited with status 1`
+
+Normalmente erro na inicializacao da app (env, DB, import).
+
+Checklist:
+
+1. `DATABASE_URL` existe e esta valida.
+2. `FLASK_ENV=production`.
+3. `PYTHON_VERSION=3.12`.
+4. Rode no shell:
+
+```bash
+python - <<'PY'
+import os
+print('DATABASE_URL set?', bool(os.getenv('DATABASE_URL')))
+from run import app
+print('APP_OK')
+PY
+```
+
+### `SQLALCHEMY_DATABASE_URI nao configurado para o ambiente atual`
+
+`DATABASE_URL` ausente ou vazia em producao.
+
+### `ImportError ... psycopg2 ... undefined symbol: _PyInterpreterState_Get`
+
+Causa: runtime Python 3.14 com wheel `psycopg2-binary` incompativel.
+
+Correcao:
+
+1. Fixar Python 3.12.
+2. `Clear build cache & deploy`.
+3. Confirmar logs sem `cp314`.
+
+### `UnicodeDecodeError: 'utf-8' codec can't decode byte ...`
+
+Causa comum: leitura de `.env` com codificacao invalida em ambiente de deploy.
+
+Correcao:
+
+1. `PYTHON_DOTENV_DISABLED=1`
+2. garantir `FLASK_ENV=production`
+3. redeploy com cache limpo
+
+Obs.: o app ja ignora `.env` automaticamente em Render (`RENDER=true`).
+
+### `ModuleNotFoundError: No module named 'app'`
+
+- Execute comandos na raiz do projeto.
+- Prefira `flask --app run.py ...`.
+
+### Audio nao toca no player
+
+1. Rode `flask --app run.py seed-db` para gerar arquivos demo.
+2. Verifique `arquivo_url` salvo no banco.
+
+## Seguranca (producao)
+
+- use `SECRET_KEY` forte
+- use PostgreSQL gerenciado
+- habilite verificacao de e-mail (`REQUIRE_EMAIL_VERIFICATION=true`)
+- configure Stripe webhook com segredo valido
+- use HTTPS no dominio final
+- habilite Sentry (opcional)
+
+## Limitacoes do plano gratis
+
+- Render free pode entrar em sleep sem trafego
+- primeira requisicao apos idle pode ter cold start
+- evite depender de filesystem local para dados permanentes
+
+## Licenca
+
+Uso educacional.
