@@ -4,7 +4,24 @@ from secrets import token_hex
 
 from dotenv import load_dotenv
 
-load_dotenv()
+
+def _load_environment():
+    """Carrega .env apenas para execucao local."""
+    if os.getenv('PYTHON_DOTENV_DISABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}:
+        return
+
+    flask_env = (os.getenv('FLASK_ENV') or '').strip().lower()
+    if flask_env == 'production':
+        return
+
+    try:
+        load_dotenv(encoding='utf-8')
+    except UnicodeDecodeError:
+        # Fallback para arquivos .env salvos como Windows-1252 em ambiente local.
+        load_dotenv(encoding='cp1252')
+
+
+_load_environment()
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEFAULT_SQLITE_PATH = os.path.join(BASE_DIR, 'instance', 'streaming_music.db')
