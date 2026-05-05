@@ -29,12 +29,106 @@ SEED_AUDIO_SAMPLE_RATE = 22050
 SEED_AUDIO_AMPLITUDE = 0.25
 
 
+def _default_plans_catalog():
+    return [
+        {
+            'codigo': 'free',
+            'nome': 'Free',
+            'descricao': 'Plano inicial para testes',
+            'preco_mensal_centavos': 0,
+            'moeda': 'brl',
+            'limite_playlists_privadas': 1,
+            'limite_usuarios': 1,
+            'ativo': True,
+        },
+        {
+            'codigo': 'pro',
+            'nome': 'Pro',
+            'descricao': 'Plano para projetos em crescimento',
+            'preco_mensal_centavos': 4900,
+            'moeda': 'brl',
+            'limite_playlists_privadas': 25,
+            'limite_usuarios': 5,
+            'ativo': True,
+        },
+        {
+            'codigo': 'business',
+            'nome': 'Business',
+            'descricao': 'Plano para equipes com maior volume',
+            'preco_mensal_centavos': 14900,
+            'moeda': 'brl',
+            'limite_playlists_privadas': 200,
+            'limite_usuarios': 25,
+            'ativo': True,
+        },
+    ]
+
+
 def _plan_price_map():
     return {
         'free': app.config.get('STRIPE_PRICE_ID_FREE'),
         'pro': app.config.get('STRIPE_PRICE_ID_PRO'),
         'business': app.config.get('STRIPE_PRICE_ID_BUSINESS'),
     }
+
+
+def _upsert_default_plans(sync_stripe_ids=False):
+    price_map = _plan_price_map()
+    created = 0
+    updated = 0
+
+    for data in _default_plans_catalog():
+        codigo = data['codigo']
+        plano = Plan.query.filter_by(codigo=codigo).first()
+        stripe_price_id = price_map.get(codigo)
+
+        if not plano:
+            plano = Plan(
+                codigo=codigo,
+                nome=data['nome'],
+                descricao=data['descricao'],
+                preco_mensal_centavos=data['preco_mensal_centavos'],
+                moeda=data['moeda'],
+                stripe_price_id=stripe_price_id if sync_stripe_ids else None,
+                limite_playlists_privadas=data['limite_playlists_privadas'],
+                limite_usuarios=data['limite_usuarios'],
+                ativo=data['ativo'],
+            )
+            db.session.add(plano)
+            created += 1
+            continue
+
+        plano.nome = data['nome']
+        plano.descricao = data['descricao']
+        plano.preco_mensal_centavos = data['preco_mensal_centavos']
+        plano.moeda = data['moeda']
+        plano.limite_playlists_privadas = data['limite_playlists_privadas']
+        plano.limite_usuarios = data['limite_usuarios']
+        plano.ativo = data['ativo']
+
+        if sync_stripe_ids and stripe_price_id:
+            plano.stripe_price_id = stripe_price_id
+        updated += 1
+
+    return created, updated
+
+
+def _sync_stripe_price_ids():
+    price_map = _plan_price_map()
+    atualizados = 0
+
+    for codigo, stripe_price_id in price_map.items():
+        if not stripe_price_id:
+            continue
+        plano = Plan.query.filter_by(codigo=codigo).first()
+        if not plano:
+            continue
+        plano.stripe_price_id = stripe_price_id
+        atualizados += 1
+
+    if atualizados:
+        db.session.commit()
+    return atualizados
 
 
 def _slugify(value):
@@ -195,6 +289,7 @@ def make_shell_context():
 def init_db():
     """Inicializa o banco de dados"""
     db.create_all()
+    tenant_criado = False
     if not Tenant.query.filter_by(slug=Tenant.default_slug()).first():
         db.session.add(
             Tenant(
@@ -202,8 +297,13 @@ def init_db():
                 slug=Tenant.default_slug(),
             )
         )
-        db.session.commit()
+        tenant_criado = True
+    planos_criados, planos_atualizados = _upsert_default_plans(sync_stripe_ids=False)
+    db.session.commit()
     print('Banco de dados inicializado!')
+    if tenant_criado:
+        print(f'Tenant default criado: {Tenant.default_slug()}')
+    print(f'Planos criados: {planos_criados} | atualizados: {planos_atualizados}')
 
 
 @app.cli.command()
@@ -226,41 +326,21 @@ def seed_db():
     db.session.add(tenant_default)
     db.session.flush()
 
-    planos = [
-        Plan(
-            codigo='free',
-            nome='Free',
-            descricao='Plano inicial para testes',
-            preco_mensal_centavos=0,
-            moeda='brl',
-            stripe_price_id=_plan_price_map().get('free'),
-            limite_playlists_privadas=1,
-            limite_usuarios=1,
-            ativo=True,
-        ),
-        Plan(
-            codigo='pro',
-            nome='Pro',
-            descricao='Plano para projetos em crescimento',
-            preco_mensal_centavos=4900,
-            moeda='brl',
-            stripe_price_id=_plan_price_map().get('pro'),
-            limite_playlists_privadas=25,
-            limite_usuarios=5,
-            ativo=True,
-        ),
-        Plan(
-            codigo='business',
-            nome='Business',
-            descricao='Plano para equipes com maior volume',
-            preco_mensal_centavos=14900,
-            moeda='brl',
-            stripe_price_id=_plan_price_map().get('business'),
-            limite_playlists_privadas=200,
-            limite_usuarios=25,
-            ativo=True,
-        ),
-    ]
+    planos = []
+    for plan_data in _default_plans_catalog():
+        planos.append(
+            Plan(
+                codigo=plan_data['codigo'],
+                nome=plan_data['nome'],
+                descricao=plan_data['descricao'],
+                preco_mensal_centavos=plan_data['preco_mensal_centavos'],
+                moeda=plan_data['moeda'],
+                stripe_price_id=_plan_price_map().get(plan_data['codigo']),
+                limite_playlists_privadas=plan_data['limite_playlists_privadas'],
+                limite_usuarios=plan_data['limite_usuarios'],
+                ativo=plan_data['ativo'],
+            )
+        )
     db.session.add_all(planos)
     db.session.flush()
 
@@ -402,23 +482,42 @@ def seed_db():
 @app.cli.command('sync-stripe-prices')
 def sync_stripe_prices():
     """Sincroniza stripe_price_id dos planos usando variaveis de ambiente."""
-    price_map = _plan_price_map()
-    atualizados = 0
-
-    for codigo, stripe_price_id in price_map.items():
-        if not stripe_price_id:
-            continue
-        plano = Plan.query.filter_by(codigo=codigo).first()
-        if not plano:
-            continue
-        plano.stripe_price_id = stripe_price_id
-        atualizados += 1
-
-    if atualizados:
-        db.session.commit()
+    atualizados = _sync_stripe_price_ids()
+    if atualizados > 0:
         print(f'Stripe price IDs atualizados para {atualizados} plano(s).')
     else:
         print('Nenhum plano atualizado. Verifique STRIPE_PRICE_ID_* no .env.')
+
+
+@app.cli.command('ensure-plans')
+def ensure_plans():
+    """Garante os planos base (free/pro/business) sem apagar dados."""
+    created, updated = _upsert_default_plans(sync_stripe_ids=False)
+    db.session.commit()
+    print(f'Planos garantidos. Criados: {created} | atualizados: {updated}')
+
+
+@app.cli.command('bootstrap-deploy')
+def bootstrap_deploy():
+    """Bootstrap seguro para primeiro deploy em nuvem."""
+    db.create_all()
+
+    tenant = Tenant.query.filter_by(slug=Tenant.default_slug()).first()
+    if not tenant:
+        tenant = Tenant(
+            nome=app.config.get('DEFAULT_TENANT_NAME', 'Workspace Padrao'),
+            slug=Tenant.default_slug(),
+        )
+        db.session.add(tenant)
+
+    planos_criados, planos_atualizados = _upsert_default_plans(sync_stripe_ids=False)
+    db.session.commit()
+    stripe_ids_atualizados = _sync_stripe_price_ids()
+
+    print('Bootstrap base concluido.')
+    print(f'Tenant default: {tenant.slug}')
+    print(f'Planos criados: {planos_criados} | atualizados: {planos_atualizados}')
+    print(f'Stripe price IDs sincronizados: {stripe_ids_atualizados}')
 
 
 if __name__ == '__main__':

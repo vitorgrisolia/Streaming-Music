@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: streaming-music
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+    healthCheckPath: /
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: APP_NAME
+        value: Vitorando Music
+      - key: APP_BASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DEFAULT_TENANT_SLUG
+        value: default
+      - key: DEFAULT_TENANT_NAME
+        value: Workspace Padrao
+      - key: REQUIRE_EMAIL_VERIFICATION
+        value: "true"
+      - key: AUTO_VERIFY_EMAIL
+        value: "false"
+      - key: PASSWORD_RESET_TOKEN_EXP_HOURS
+        value: "1"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "120"
+      - key: EMAIL_DELIVERY_ENABLED
+        value: "false"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: SMTP_USE_SSL
+        value: "false"
+      - key: MAIL_FROM
+        value: no-reply@streamingmusic.local
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_FREE
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
+      - key: STRIPE_PRICE_ID_BUSINESS
+        sync: false
+      - key: SENTRY_DSN
+        sync: false

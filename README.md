@@ -348,3 +348,66 @@ venv\Scripts\python.exe -c "import stripe; print(stripe._version.VERSION)"
 ## Licença
 
 Uso educacional.
+
+## Deploy Render + Neon (Free)
+
+This repository now includes `render.yaml` for Render Blueprint deployment.
+
+### 1. Create infrastructure
+
+1. Create a PostgreSQL database on Neon and copy `DATABASE_URL`.
+2. Create a Web Service on Render from this repository (or use Blueprint sync).
+3. Set the required secrets in Render:
+   - `DATABASE_URL`
+   - `APP_BASE_URL`
+   - `STRIPE_*` values
+
+### 2. Build and start commands
+
+- Build: `pip install -r requirements.txt`
+- Start: `gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120`
+
+### 3. First deploy bootstrap (safe / non-destructive)
+
+Run these commands once in the Render Shell:
+
+```bash
+flask --app run.py db upgrade
+flask --app run.py bootstrap-deploy
+```
+
+Optional (if you changed Stripe Price IDs later):
+
+```bash
+flask --app run.py sync-stripe-prices
+```
+
+### 4. New CLI commands
+
+- `flask --app run.py ensure-plans`
+  - upserts `free`, `pro`, `business` plans without deleting data.
+- `flask --app run.py bootstrap-deploy`
+  - ensures DB tables, default tenant, base plans, and Stripe price sync.
+
+### 5. Stripe webhook
+
+Set your Stripe webhook endpoint to:
+
+```text
+https://<your-render-domain>/api/billing/webhook
+```
+
+Recommended events:
+
+- `checkout.session.completed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+
+## Render MCP (AI Build Debug)
+
+To debug failed deploys with AI tools (Cursor / Claude Code), connect Render MCP and use prompts like:
+
+- `Show my latest failed deploy logs for <service-name>`
+- `Diagnose root cause and propose exact build/start/env fixes`
+- `List missing environment variables used by this Flask app`

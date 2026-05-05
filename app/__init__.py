@@ -1,6 +1,7 @@
-﻿import os
+import os
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.config.settings import config
 from app.extensions import init_extensions
@@ -20,8 +21,13 @@ def create_app(config_name=None):
     if app.config.get('SQLALCHEMY_DATABASE_URI') is None:
         raise ValueError('SQLALCHEMY_DATABASE_URI nao configurado para o ambiente atual.')
 
+    if not app.debug:
+        # Render e outros provedores passam HTTPS/origem real via proxy reverso.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
     # Inicializa extensoes
     init_extensions(app)
+    os.makedirs(app.config.get('UPLOAD_FOLDER', os.path.join(app.root_path, 'uploads')), exist_ok=True)
 
     @app.context_processor
     def inject_app_identity():

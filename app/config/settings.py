@@ -17,6 +17,15 @@ def _env_bool(name, default=False):
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def _normalize_database_url(value):
+    """Normaliza URLs antigas `postgres://` para formato aceito pelo SQLAlchemy."""
+    if not value:
+        return value
+    if value.startswith('postgres://'):
+        return value.replace('postgres://', 'postgresql://', 1)
+    return value
+
+
 class Config:
     """Configuracao base da aplicacao."""
 
@@ -76,7 +85,7 @@ class DevelopmentConfig(Config):
     """Configuracao de desenvolvimento."""
 
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or f'sqlite:///{DEFAULT_SQLITE_PATH}'
+    SQLALCHEMY_DATABASE_URI = _normalize_database_url(os.getenv('DATABASE_URL')) or f'sqlite:///{DEFAULT_SQLITE_PATH}'
     SESSION_COOKIE_SECURE = False
     REMEMBER_COOKIE_SECURE = False
     WTF_CSRF_ENABLED = _env_bool('WTF_CSRF_ENABLED', False)
@@ -88,7 +97,7 @@ class ProductionConfig(Config):
     """Configuracao de producao."""
 
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = _normalize_database_url(os.getenv('DATABASE_URL'))
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
     WTF_CSRF_ENABLED = _env_bool('WTF_CSRF_ENABLED', True)
