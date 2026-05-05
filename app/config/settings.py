@@ -10,6 +10,9 @@ def _load_environment():
     if os.getenv('PYTHON_DOTENV_DISABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}:
         return
 
+    if os.getenv('RENDER', '').strip().lower() == 'true':
+        return
+
     flask_env = (os.getenv('FLASK_ENV') or '').strip().lower()
     if flask_env == 'production':
         return

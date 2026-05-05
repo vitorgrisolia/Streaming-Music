@@ -357,6 +357,14 @@ flask --app run.py db upgrade
 flask --app run.py bootstrap-deploy
 ```
 
+### `ImportError ... psycopg2 ... undefined symbol: _PyInterpreterState_Get`
+
+Esse erro costuma acontecer quando o deploy usa Python 3.14 com `psycopg2-binary` antigo.
+
+1. Fixe a versao para Python 3.12.
+2. Limpe cache de build e redeploy.
+3. Verifique nos logs se os wheels nao estao mais como `cp314`.
+
 ## Licença
 
 Uso educacional.
