@@ -345,6 +345,18 @@ venv\Scripts\python.exe -m pip install -r requirements.txt
 venv\Scripts\python.exe -c "import stripe; print(stripe._version.VERSION)"
 ```
 
+### Deploy sobe, mas cai com `Exited with status 1` no Render
+
+1. Confirme `DATABASE_URL` configurada no servico.
+2. Confirme `FLASK_ENV=production`.
+3. Fixe a versao de Python para 3.12 (ou superior) no Render.
+4. Rode no Shell do Render:
+
+```bash
+flask --app run.py db upgrade
+flask --app run.py bootstrap-deploy
+```
+
 ## Licença
 
 Uso educacional.

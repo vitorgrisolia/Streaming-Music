@@ -1,7 +1,7 @@
 import json
 import re
 import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import current_app, has_request_context, request
 from flask_login import login_user, logout_user
@@ -9,6 +9,8 @@ from flask_login import login_user, logout_user
 from app.extensions import db
 from app.models import AuditLog, Membership, Tenant, User
 from app.services.email_service import EmailService, EmailServiceError
+
+UTC = timezone.utc
 
 
 class AuthController:

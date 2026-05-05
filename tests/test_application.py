@@ -1,7 +1,7 @@
 import json
 import sys
 import unittest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +12,8 @@ from app import create_app
 from app.controllers.auth_controller import AuthController
 from app.extensions import db
 from app.models import Album, Artist, Music, Plan, Playlist, Subscription, Tenant, User
+
+UTC = timezone.utc
 
 
 class ApplicationApiTestCase(unittest.TestCase):

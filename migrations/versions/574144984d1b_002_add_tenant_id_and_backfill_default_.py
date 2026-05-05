@@ -5,10 +5,12 @@ Revises: 79436e86c751
 Create Date: 2026-03-17 17:20:46.256125
 
 """
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from alembic import op
 import sqlalchemy as sa
+
+UTC = timezone.utc
 
 
 # revision identifiers, used by Alembic.

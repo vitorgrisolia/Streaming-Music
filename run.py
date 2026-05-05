@@ -3,7 +3,7 @@ import re
 import struct
 import unicodedata
 import wave
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app import create_app
@@ -24,6 +24,7 @@ from app.models import (
 )
 
 app = create_app()
+UTC = timezone.utc
 SEED_AUDIO_DURATION_SECONDS = 12
 SEED_AUDIO_SAMPLE_RATE = 22050
 SEED_AUDIO_AMPLITUDE = 0.25

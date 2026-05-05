@@ -1,11 +1,13 @@
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from flask import current_app
 
 from app.extensions import db
 from app.models import Plan, Subscription, UsageEvent
 from app.services.stripe_service import StripeService, StripeServiceError
+
+UTC = timezone.utc
 
 
 class BillingController:

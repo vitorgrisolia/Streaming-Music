@@ -1,7 +1,9 @@
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from flask import current_app
+
+UTC = timezone.utc
 
 
 class StripeServiceError(Exception):
